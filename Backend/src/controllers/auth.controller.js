@@ -69,7 +69,7 @@ async function loginUser(req, res) {
       role: user.role,
     },
     process.env.JWT_SECRET,
-  );
+  ); 
 
   res.cookie("token", token);
 

@@ -83,4 +83,14 @@ async function loginUser(req, res) {
     },
   });
 }
-module.exports = { resgisterUser, loginUser };
+
+//........
+
+async function logOutUser(req, res){
+res.clearCookie("token");
+res.status(200).json({
+  message: " user logged out successfully",
+})
+
+}
+module.exports = { resgisterUser, loginUser, logOutUser };

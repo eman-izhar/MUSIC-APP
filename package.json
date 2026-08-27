@@ -1,0 +1,10 @@
+{
+  "name": "music-app",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "backend": "npm --prefix Backend start"
+  }
+}

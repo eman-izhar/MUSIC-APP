@@ -20,8 +20,8 @@ router.post(
   musicController.createAlbum,
 );
 
-router.get("/", authMiddleware.authUser, musicController.getAllMusics);
-router.get("/albums", authMiddleware.authUser, musicController.getAllAlbums);
-router.get("/albums/:albumsID", authMiddleware.authUser, musicController.getAllAlbumsById);
+router.get("/", authMiddleware.authAuthenticated, musicController.getAllMusics);
+router.get("/albums", authMiddleware.authAuthenticated, musicController.getAllAlbums);
+router.get("/albums/:albumsID", authMiddleware.authAuthenticated, musicController.getAllAlbumsById);
 
 module.exports = router;

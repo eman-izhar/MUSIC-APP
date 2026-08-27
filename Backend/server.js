@@ -3,8 +3,9 @@ const app = require("./src/app")
 const connectDB = require("./src/db/db")
 
 connectDB();
-app.listen(3000, ()=>{
-    console.log("connected to port no 3000")
+const port = process.env.PORT || 3001;
+app.listen(port, ()=>{
+    console.log(`connected to port no ${port}`)
 }
 )
 

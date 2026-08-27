@@ -93,4 +93,21 @@ res.status(200).json({
 })
 
 }
-module.exports = { resgisterUser, loginUser, logOutUser };
+
+async function getCurrentUser(req, res) {
+  const user = await userModel.findById(req.user.id).select("username email role");
+  if (!user) {
+    return res.status(401).json({ message: "unauthorized" });
+  }
+
+  res.status(200).json({
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  });
+}
+
+module.exports = { resgisterUser, loginUser, logOutUser, getCurrentUser };

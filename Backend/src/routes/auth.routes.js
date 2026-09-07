@@ -1,11 +1,16 @@
-const express = require("express")
-const authController = require("../controllers/auth.controller")
-const { authAuthenticated } = require("../middleware/auth.middleware")
+const express = require("express");
+const authController = require("../controllers/auth.controller");
+const { authAuthenticated } = require("../middleware/auth.middleware");
 const router = express.Router();
 
-router.post('/register', authController.resgisterUser )
-router.post('/login', authController.loginUser )
-router.post('/logout', authController.logOutUser )
-router.get('/me', authAuthenticated, authController.getCurrentUser )
+// ─── Existing routes ──────────────────────────────────────
+router.post("/register", authController.resgisterUser);
+router.post("/login", authController.loginUser);
+router.get("/me", authAuthenticated, authController.getMe);
+router.post("/logout", authController.logoutUser);
+
+// ─── Forgot / Reset Password (NEW) ───────────────────────
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password/:token", authController.resetPassword);
 
 module.exports = router;

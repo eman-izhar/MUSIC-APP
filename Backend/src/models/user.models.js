@@ -15,14 +15,21 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  role:{
+  role: {
     type: String,
-    enum:['user', 'artist'],
-    default: 'user',
-  }
+    enum: ["user", "artist"],
+    default: "user",
+  },
+  // ── Forgot Password fields ──────────────────────────────
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null,
+  },
+  // ────────────────────────────────────────────────────────
 });
 
-const userModel = mongoose.model("user", userSchema
-)
-
-module.exports = userModel;
+module.exports = mongoose.model("User", userSchema);

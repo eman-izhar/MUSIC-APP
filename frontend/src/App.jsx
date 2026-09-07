@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://music-website-zzol.onrender.com'
 const fallbackTracks = [
   { id: 'signal', title: 'Signal Bloom', artist: 'Mira Sol', genre: 'Electronic', color: 'violet', uri: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
   { id: 'afterglow', title: 'Afterglow FM', artist: 'Neon Choir', genre: 'Dream pop', color: 'orange', uri: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },

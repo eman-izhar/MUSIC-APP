@@ -12,7 +12,7 @@ app.use(cookieParser());
 // CORRECTED: Allow both local development and live Vercel requests
 const allowedOrigins = [
   "http://localhost:5175",
-  "https://music-1jldq5l4d-emaanizhar-7212s-projects.vercel.app" // Your live Vercel app
+  "https://music-app-sepia-theta.vercel.app" // Updated to match your current Vercel domain
 ];
 
 app.use(cors({ 

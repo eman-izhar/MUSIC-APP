@@ -135,7 +135,7 @@ async function forgotPassword(req, res) {
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS.replace(/\s+/g, ""),
       },
     });
 
@@ -168,7 +168,12 @@ async function forgotPassword(req, res) {
       message: "If that email is registered, a reset link has been sent.",
     });
   } catch (err) {
-    console.error("forgotPassword error:", err);
+    console.error("forgotPassword error:", {
+      code: err.code,
+      responseCode: err.responseCode,
+      command: err.command,
+      message: err.message,
+    });
     return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 }

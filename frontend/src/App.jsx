@@ -24,6 +24,62 @@ async function request(path, options = {}) {
   return data;
 }
 
+function MouseStars() {
+  const [stars, setStars] = useState([]);
+  const nextId = useRef(0);
+  const frameRef = useRef(null);
+  const pointerRef = useRef(null);
+
+  useEffect(() => {
+    function handlePointerMove(event) {
+      pointerRef.current = event;
+      if (frameRef.current) return;
+
+      frameRef.current = requestAnimationFrame(() => {
+        const pointer = pointerRef.current;
+        const starId = nextId.current++;
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 18 + Math.random() * 20;
+        setStars((currentStars) => [
+          ...currentStars.slice(-11),
+          {
+            id: starId,
+            x: pointer.clientX + Math.cos(angle) * distance,
+            y: pointer.clientY + Math.sin(angle) * distance,
+            size: 7 + Math.random() * 9,
+            rotation: Math.random() * 45,
+          },
+        ]);
+        frameRef.current = null;
+      });
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
+
+  return (
+    <div className="mouse-stars" aria-hidden="true">
+      {stars.map((star) => (
+        <span
+          className="mouse-star"
+          key={star.id}
+          style={{
+            left: star.x,
+            top: star.y,
+            width: star.size,
+            height: star.size,
+            transform: `rotate(${star.rotation}deg)`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [tracks, setTracks] = useState([]);
@@ -220,6 +276,7 @@ function App() {
 
   return (
     <main className="app-shell">
+      <MouseStars />
       <header className="topbar">
         <a className="brand" href="#top">
           <span className="brand-mark">◒</span> SONORA

@@ -2,7 +2,7 @@ const userModel = require("../models/user.models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 // ─── Register ────────────────────────────────────────────────────────────────
 async function resgisterUser(req, res) {
@@ -130,39 +130,30 @@ async function forgotPassword(req, res) {
       throw new Error("EMAIL_USER and EMAIL_PASS must be configured");
     }
 
-    // Send email via Nodemailer (Gmail)
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS.replace(/\s+/g, ""),
-      },
-    });
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-    await transporter.sendMail({
-      from: `"Music App" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: "🔑 Password Reset Request",
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: auto;">
-          <h2>Password Reset</h2>
-          <p>Hi <strong>${user.username}</strong>,</p>
-          <p>You requested a password reset. Click the button below. This link expires in <strong>1 hour</strong>.</p>
-          <a href="${resetLink}" style="
-            display: inline-block;
-            padding: 12px 24px;
-            background: #7c3aed;
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            margin: 16px 0;
-          ">Reset My Password</a>
-          <p>Or copy this link:<br/><a href="${resetLink}">${resetLink}</a></p>
-          <p style="color:#888; font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
-        </div>
-      `,
-    });
+await resend.emails.send({
+  from: "Music App <onboarding@resend.dev>",
+  to: user.email,
+  subject: "🔑 Password Reset Request",
+  html: `
+    <div style="font-family: sans-serif; max-width: 480px; margin: auto;">
+      <h2>Password Reset</h2>
+      <p>Hi <strong>${user.username}</strong>,</p>
+      <p>Click the button below to reset your password. 
+         This link expires in <strong>1 hour</strong>.</p>
+      <a href="${resetLink}" style="
+        display: inline-block; padding: 12px 24px;
+        background: #7c3aed; color: white; border-radius: 8px;
+        text-decoration: none; font-weight: bold; margin: 16px 0;
+      ">Reset My Password</a>
+      <p>Or copy: <a href="${resetLink}">${resetLink}</a></p>
+      <p style="color:#888;font-size:12px;">
+        If you didn't request this, ignore this email.
+      </p>
+    </div>
+  `,
+});
 
     return res.status(200).json({
       message: "If that email is registered, a reset link has been sent.",

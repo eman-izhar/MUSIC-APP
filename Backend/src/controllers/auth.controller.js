@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const Brevo = require("@getbrevo/brevo");
+const nodemailer = require("nodemailer");
 
 // ─── Register ────────────────────────────────────────────────────────────────
 async function resgisterUser(req, res) {
@@ -109,17 +110,9 @@ async function forgotPassword(req, res) {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetLink = `${process.env.FRONTEND_URL}/#/reset-password/${token}`;
+const resetLink = `${process.env.FRONTEND_URL}/#/reset-password/${token}`;
 
-    // ── Send via Brevo ──────────────────────────────────────────────────────
-    const brevoClient = new Brevo.TransactionalEmailsApi();
-    brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
-
-    await brevoClient.sendTransacEmail({
-      sender: { name: "Music App", email: process.env.EMAIL_USER },
-      to: [{ email: user.email, name: user.username }],
-      subject: "🔑 Password Reset Request",
-      htmlContent: `
+    const emailHtml = `
         <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;">
           <h2 style="color:#7c3aed;">Password Reset</h2>
           <p>Hi <strong>${user.username}</strong>,</p>
@@ -144,9 +137,34 @@ async function forgotPassword(req, res) {
             If you didn't request this, you can safely ignore this email.
           </p>
         </div>
-      `,
-    });
-    // ───────────────────────────────────────────────────────────────────────
+      `;
+
+    if (process.env.BREVO_API_KEY) {
+      const brevoClient = new Brevo.TransactionalEmailsApi();
+      brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
+      await brevoClient.sendTransacEmail({
+        sender: { name: "Music App", email: process.env.EMAIL_USER },
+        to: [{ email: user.email, name: user.username }],
+        subject: "Password Reset Request",
+        htmlContent: emailHtml,
+      });
+    } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+      await transporter.sendMail({
+        from: `Music App <${process.env.EMAIL_USER}>`,
+        to: user.email,
+        subject: "Password Reset Request",
+        html: emailHtml,
+      });
+    } else {
+      throw new Error("Configure BREVO_API_KEY or EMAIL_USER and EMAIL_PASS");
+    }
 
     return res.status(200).json({
       message: "If that email is registered, a reset link has been sent.",

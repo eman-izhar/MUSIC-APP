@@ -166,10 +166,10 @@ if (!brevoRes.ok) {
     return res.status(200).json({
       message: "If that email is registered, a reset link has been sent.",
     });
-  } catch (err) {
-    console.error("forgotPassword error:", err);
-    return res.status(500).json({ message: "Something went wrong. Please try again." });
-  }
+} catch (err) {
+  console.error("forgotPassword error:", err);
+  return res.status(500).json({ message: err.message }); // temporary debug
+}
 }
 
 // ─── Reset Password ──────────────────────────────────────────────────────────

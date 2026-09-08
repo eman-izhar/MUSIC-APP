@@ -3,40 +3,6 @@ import "./App.css";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
-const fallbackTracks = [
-  {
-    id: "signal",
-    title: "Signal Bloom",
-    artist: "Mira Sol",
-    genre: "Electronic",
-    color: "violet",
-    uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-  },
-  {
-    id: "afterglow",
-    title: "Afterglow FM",
-    artist: "Neon Choir",
-    genre: "Dream pop",
-    color: "orange",
-    uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-  },
-  {
-    id: "lowlight",
-    title: "Lowlight Atlas",
-    artist: "Kairo",
-    genre: "Alt R&B",
-    color: "cyan",
-    uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-  },
-  {
-    id: "sunday",
-    title: "Sunday Static",
-    artist: "Juniper Lane",
-    genre: "Indie",
-    color: "pink",
-    uri: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-  },
-];
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
@@ -50,7 +16,7 @@ async function request(path, options = {}) {
 
 function App() {
   const [user, setUser] = useState(null);
-  const [tracks, setTracks] = useState(fallbackTracks);
+  const [tracks, setTracks] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [activeTrack, setActiveTrack] = useState(null);
   const [query, setQuery] = useState("");
@@ -90,17 +56,14 @@ function App() {
           const remoteTracks =
             data.musics?.map((track) => ({
               ...track,
+              id: track._id || track.id,
               artist: track.artist?.username || "Unknown artist",
               genre: "New release",
               color: "violet",
             })) || [];
-          setTracks(remoteTracks.length ? remoteTracks : fallbackTracks);
+          setTracks(remoteTracks);
         })
-        .catch(() =>
-          setNotice(
-            "The demo library is ready. Connect the database to load your saved tracks.",
-          ),
-        ),
+        .catch(() => setTracks([])),
       request("/music/albums")
         .then((data) => setAlbums(data.albums || []))
         .catch(() => setAlbums([])),
@@ -441,26 +404,10 @@ function App() {
                   <h2>Albums</h2>
                 </div>
                 <span className="count-label">
-                  {albums.length || "04"} total
+                  {albums.length} total
                 </span>
               </div>
-              {(albums.length
-                ? albums
-                : [
-                    {
-                      title: "Night drive / Vol. 01",
-                      artist: { username: "Sonora Selects" },
-                    },
-                    {
-                      title: "Soft machinery",
-                      artist: { username: "Various artists" },
-                    },
-                    {
-                      title: "Future nostalgia",
-                      artist: { username: "Sonora Selects" },
-                    },
-                  ]
-              ).map((album, index) => (
+              {albums.map((album, index) => (
                 <div
                   className="album-item"
                   key={album._id || album.id || index}

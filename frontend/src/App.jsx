@@ -29,10 +29,15 @@ function MouseStars() {
   const nextId = useRef(0);
   const frameRef = useRef(null);
   const pointerRef = useRef(null);
+  const cursorRef = useRef(null);
 
   useEffect(() => {
     function handlePointerMove(event) {
       pointerRef.current = event;
+      if (cursorRef.current) {
+        cursorRef.current.style.left = `${event.clientX}px`;
+        cursorRef.current.style.top = `${event.clientY}px`;
+      }
       if (frameRef.current) return;
 
       frameRef.current = requestAnimationFrame(() => {
@@ -48,6 +53,7 @@ function MouseStars() {
             y: pointer.clientY + Math.sin(angle) * distance,
             size: 7 + Math.random() * 9,
             rotation: Math.random() * 45,
+            note: Math.random() > 0.72 ? "♫" : "♪",
           },
         ]);
         frameRef.current = null;
@@ -63,18 +69,21 @@ function MouseStars() {
 
   return (
     <div className="mouse-stars" aria-hidden="true">
+      <span className="mouse-cursor" ref={cursorRef} />
       {stars.map((star) => (
         <span
-          className="mouse-star"
+          className="mouse-note"
           key={star.id}
+          aria-hidden="true"
           style={{
             left: star.x,
             top: star.y,
-            width: star.size,
-            height: star.size,
-            transform: `rotate(${star.rotation}deg)`,
+            fontSize: star.size * 2,
+            "--note-rotation": `${star.rotation - 22}deg`,
           }}
-        />
+        >
+          {star.note}
+        </span>
       ))}
     </div>
   );

@@ -292,8 +292,6 @@ function App() {
           <span className="brand-dot">.</span>
         </a>
         <nav>
-          <a href="#discover">Discover</a>
-          <a href="#albums">Albums</a>
           {user?.role === "artist" && <a href="#studio">Studio</a>}
         </nav>
         <div className="top-actions">

@@ -1,0 +1,400 @@
+/* ─── Browse Page — SONORA Theme ─────────────────────────────────────────── */
+
+/* Shell */
+.browse-shell {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #1a1a2e 100%);
+  color: #fff;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  padding-bottom: 24px;
+}
+
+.browse-shell.has-player {
+  padding-bottom: 100px;
+}
+
+/* ─── Top bar ─────────────────────────────────────────────────────────────── */
+.browse-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.browse-brand {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.browse-brand-mark { color: #7c3aed; }
+.browse-dot { color: #7c3aed; }
+
+.browse-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.browse-username {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.browse-ghost-btn {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  padding: 7px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+
+.browse-ghost-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ─── Hero ────────────────────────────────────────────────────────────────── */
+.browse-hero {
+  padding: 40px 32px 20px;
+}
+
+.browse-eyebrow {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #7c3aed;
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.browse-hero h1 {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0 0 12px;
+  letter-spacing: -1px;
+}
+
+.browse-hero h1 em {
+  font-style: italic;
+  color: #a78bfa;
+}
+
+.browse-hero-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+/* ─── Category tabs ───────────────────────────────────────────────────────── */
+.browse-tabs-wrap {
+  padding: 0 32px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.browse-tabs-wrap::-webkit-scrollbar { display: none; }
+
+.browse-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 0;
+  width: max-content;
+}
+
+.browse-tab {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.browse-tab:hover {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.4);
+  color: #fff;
+}
+
+.browse-tab.active {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ─── Main content ────────────────────────────────────────────────────────── */
+.browse-main {
+  padding: 8px 32px 0;
+}
+
+/* ─── Track grid ──────────────────────────────────────────────────────────── */
+.browse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+/* ─── Track card ──────────────────────────────────────────────────────────── */
+.browse-card {
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s;
+}
+
+.browse-card:hover {
+  transform: translateY(-4px);
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.35);
+}
+
+.browse-card.active {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.2);
+}
+
+.browse-art-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.browse-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s;
+}
+
+.browse-card:hover .browse-art {
+  transform: scale(1.05);
+}
+
+.browse-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.browse-card:hover .browse-overlay,
+.browse-card.active .browse-overlay {
+  opacity: 1;
+}
+
+.browse-play-icon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+
+.browse-now-playing-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.browse-card-info {
+  padding: 10px 12px 12px;
+}
+
+.browse-track-name {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browse-artist-name {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browse-preview-label {
+  margin: 0;
+  font-size: 10px;
+  color: #7c3aed;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Skeleton loading ────────────────────────────────────────────────────── */
+.browse-loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.browse-card-skeleton {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  aspect-ratio: 0.75;
+  animation: browse-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes browse-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1;   }
+}
+
+/* ─── Center message ──────────────────────────────────────────────────────── */
+.browse-center-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: 12px;
+  padding: 32px;
+}
+
+.browse-big-icon {
+  font-size: 64px;
+}
+
+.browse-cta {
+  display: inline-block;
+  padding: 12px 28px;
+  background: #7c3aed;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+
+.browse-cta:hover {
+  background: #6d28d9;
+}
+
+/* ─── Bottom player ───────────────────────────────────────────────────────── */
+.browse-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 8, 30, 0.97);
+  backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(124, 58, 237, 0.3);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 100;
+}
+
+.browse-player-art {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.browse-player-info {
+  flex-shrink: 0;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.browse-player-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browse-player-artist {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browse-player-audio {
+  flex: 1;
+  height: 36px;
+  min-width: 0;
+  accent-color: #7c3aed;
+}
+
+.browse-player-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.browse-player-close:hover {
+  color: #fff;
+}
+
+/* ─── Spinner ─────────────────────────────────────────────────────────────── */
+.browse-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(124, 58, 237, 0.3);
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: browse-spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes browse-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .browse-topbar { padding: 16px 20px; }
+  .browse-hero   { padding: 28px 20px 16px; }
+  .browse-tabs-wrap { padding: 0 20px; }
+  .browse-main   { padding: 8px 20px 0; }
+  .browse-grid   { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+  .browse-player { padding: 10px 16px; gap: 10px; }
+  .browse-player-info { display: none; }
+}

@@ -200,6 +200,22 @@ function App() {
         <div className="top-actions">
           {user ? (
             <>
+              {user?.role === "user" && (
+                <a
+                  href="/#/browse"
+                  style={{
+                    padding: "8px 18px",
+                    background: "#7c3aed",
+                    color: "#fff",
+                    borderRadius: "20px",
+                    textDecoration: "none",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                  }}
+                >
+                  🎵 Browse Music
+                </a>
+              )}
               <span className="user-pill">
                 {(user.username || "Listener").slice(0, 1).toUpperCase()} <b>{user.username || "Listener"}</b>{" "}
                 <small>{user.role === "artist" ? "Artist" : "Listener"}</small>

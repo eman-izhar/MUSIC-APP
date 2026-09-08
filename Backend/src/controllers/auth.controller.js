@@ -2,6 +2,24 @@ const userModel = require("../models/user.models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+function setAuthCookie(res, user) {
+  const token = jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+}
 
 
 // ─── Register ────────────────────────────────────────────────────────────────
@@ -18,18 +36,7 @@ async function resgisterUser(req, res) {
   const hash = await bcrypt.hash(password, 10);
   const user = await userModel.create({ username, email, password: hash, role });
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setAuthCookie(res, user);
 
   return res.status(201).json({
     message: "user registered successfully",
@@ -51,23 +58,64 @@ async function loginUser(req, res) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setAuthCookie(res, user);
 
   return res.status(200).json({
     message: "login successful",
     user: { id: user._id, username: user.username, role: user.role },
   });
+}
+
+// ─── Google Login ───────────────────────────────────────────────────────────
+async function loginWithGoogle(req, res) {
+  try {
+    const { credential } = req.body;
+    if (!credential || !process.env.GOOGLE_CLIENT_ID) {
+      return res.status(400).json({ message: "Google login is not configured." });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload?.sub || !payload.email || !payload.email_verified) {
+      return res.status(401).json({ message: "Google account could not be verified." });
+    }
+
+    let user = await userModel.findOne({
+      $or: [{ googleId: payload.sub }, { email: payload.email }],
+    });
+
+    if (!user) {
+      const baseUsername = (payload.email.split("@")[0] || "listener")
+        .replace(/[^a-zA-Z0-9_]/g, "")
+        .slice(0, 24) || "listener";
+      let username = baseUsername;
+      let suffix = 1;
+      while (await userModel.exists({ username })) {
+        username = `${baseUsername}${suffix++}`;
+      }
+      user = await userModel.create({
+        username,
+        email: payload.email,
+        googleId: payload.sub,
+        role: "user",
+      });
+    } else if (!user.googleId) {
+      user.googleId = payload.sub;
+      await user.save();
+    }
+
+    setAuthCookie(res, user);
+    return res.status(200).json({
+      message: "Google login successful",
+      user: { id: user._id, username: user.username, role: user.role },
+    });
+  } catch (error) {
+    console.error("Google login error:", error);
+    return res.status(401).json({ message: "Google login failed." });
+  }
 }
 
 // ─── Get Me ──────────────────────────────────────────────────────────────────
@@ -206,6 +254,7 @@ async function resetPassword(req, res) {
 module.exports = {
   resgisterUser,
   loginUser,
+  loginWithGoogle,
   getMe,
   logoutUser,
   forgotPassword,

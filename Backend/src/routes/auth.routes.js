@@ -6,6 +6,7 @@ const router = express.Router();
 // ─── Existing routes ──────────────────────────────────────
 router.post("/register", authController.resgisterUser);
 router.post("/login", authController.loginUser);
+router.post("/google", authController.loginWithGoogle);
 router.get("/me", authAuthenticated, authController.getMe);
 router.post("/logout", authController.logoutUser);
 

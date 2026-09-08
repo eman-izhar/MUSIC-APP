@@ -3,6 +3,7 @@ import "./App.css";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 async function searchITunes(term, entity, limit = 12) {
   const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
@@ -39,6 +40,7 @@ function App() {
   const [upload, setUpload] = useState({ title: "", file: null });
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
+  const googleButtonRef = useRef(null);
   const audioRef = useRef(null);
 
   const visibleTracks = useMemo(
@@ -56,6 +58,54 @@ function App() {
       .then((data) => setUser(data.user))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (user || authMode !== "login" || !GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
+
+    const renderGoogleButton = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async ({ credential }) => {
+          setLoading(true);
+          setNotice("");
+          try {
+            const data = await request("/auth/google", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ credential }),
+            });
+            setUser(data.user);
+            setNotice(`Welcome, ${data.user.username}.`);
+          } catch (error) {
+            setNotice(error.message);
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
+      googleButtonRef.current.replaceChildren();
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "filled_black",
+        size: "large",
+        width: 330,
+        text: "continue_with",
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      renderGoogleButton();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = renderGoogleButton;
+    document.head.appendChild(script);
+    return () => script.remove();
+  }, [authMode, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -332,6 +382,12 @@ function App() {
                   ? "Enter Sonora  →"
                   : "Create account  →"}
             </button>
+            {authMode === "login" && GOOGLE_CLIENT_ID && (
+              <>
+                <div className="auth-divider"><span>or</span></div>
+                <div className="google-button" ref={googleButtonRef} />
+              </>
+            )}
             <button
               type="button"
               className="switch-btn"

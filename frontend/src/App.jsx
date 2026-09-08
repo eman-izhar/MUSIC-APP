@@ -356,6 +356,24 @@ function App() {
               <span className="signal-bars">▂ ▅ ▇ ▆ ▃</span>
               <span>curated in real time</span>
             </div>
+            <div className="guitar-scene" aria-hidden="true">
+              <div className="guitar-glow"></div>
+              <div className="guitar">
+                <span className="guitar-neck"></span>
+                <span className="guitar-head">
+                  <i></i><i></i><i></i>
+                </span>
+                <span className="guitar-body">
+                  <span className="guitar-soundhole"></span>
+                  <span className="guitar-bridge"></span>
+                </span>
+                <span className="guitar-string string-one"></span>
+                <span className="guitar-string string-two"></span>
+                <span className="guitar-string string-three"></span>
+              </div>
+              <span className="guitar-note guitar-note-one">♪</span>
+              <span className="guitar-note guitar-note-two">♫</span>
+            </div>
           </div>
           <form className="auth-card" onSubmit={submitAuth}>
             <div className="card-top">
@@ -482,9 +500,20 @@ function App() {
               </p>
             </div>
             <div className="hero-orbit">
+              <span className="orbit-shadow"></span>
               <span className="orbit-ring ring-one"></span>
               <span className="orbit-ring ring-two"></span>
-              <span className="orbit-core">♫</span>
+              <span className="orbit-ring ring-three"></span>
+              <span className="orbit-note note-one">♪</span>
+              <span className="orbit-note note-two">♫</span>
+              <span className="orbit-disc">
+                <span className="disc-grooves"></span>
+                <span className="disc-label">SONORA</span>
+                <span className="disc-hole"></span>
+              </span>
+              <span className="orbit-eq" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </span>
               <span className="orbit-label">
                 LIVE
                 <br />

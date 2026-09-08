@@ -2,7 +2,7 @@ const userModel = require("../models/user.models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { Resend } = require("resend");
+const Brevo = require("@getbrevo/brevo");
 
 // ─── Register ────────────────────────────────────────────────────────────────
 async function resgisterUser(req, res) {
@@ -12,23 +12,14 @@ async function resgisterUser(req, res) {
     $or: [{ username }, { email }],
   });
   if (isUserALreadyExists) {
-    return res.status(409).json({
-      message: "user already exists",
-    });
+    return res.status(409).json({ message: "user already exists" });
   }
-  const hash = await bcrypt.hash(password, 10);
 
-  const user = await userModel.create({
-    username,
-    email,
-    password: hash,
-    role,
-  });
+  const hash = await bcrypt.hash(password, 10);
+  const user = await userModel.create({ username, email, password: hash, role });
+
   const token = jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-    },
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -50,10 +41,7 @@ async function resgisterUser(req, res) {
 async function loginUser(req, res) {
   const { username, email, password } = req.body;
 
-  const user = await userModel.findOne({
-    $or: [{ username }, { email }],
-  });
-
+  const user = await userModel.findOne({ $or: [{ username }, { email }] });
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
@@ -108,63 +96,63 @@ async function forgotPassword(req, res) {
 
     const user = await userModel.findOne({ email });
 
-    // Always return 200 — never reveal whether an email exists
+    // Always return 200 — never reveal whether email exists
     if (!user) {
       return res.status(200).json({
         message: "If that email is registered, a reset link has been sent.",
       });
     }
 
-    // Generate a secure random token
+    // Generate secure token
     const token = crypto.randomBytes(32).toString("hex");
-
-    // Save token + 1-hour expiry to the user document
     user.resetPasswordToken = token;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    // Build the reset link pointing to the frontend
-    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+    const resetLink = `${process.env.FRONTEND_URL}/#/reset-password/${token}`;
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      throw new Error("EMAIL_USER and EMAIL_PASS must be configured");
-    }
+    // ── Send via Brevo ──────────────────────────────────────────────────────
+    const brevoClient = new Brevo.TransactionalEmailsApi();
+    brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-await resend.emails.send({
-  from: "Music App <onboarding@resend.dev>",
-  to: user.email,
-  subject: "🔑 Password Reset Request",
-  html: `
-    <div style="font-family: sans-serif; max-width: 480px; margin: auto;">
-      <h2>Password Reset</h2>
-      <p>Hi <strong>${user.username}</strong>,</p>
-      <p>Click the button below to reset your password. 
-         This link expires in <strong>1 hour</strong>.</p>
-      <a href="${resetLink}" style="
-        display: inline-block; padding: 12px 24px;
-        background: #7c3aed; color: white; border-radius: 8px;
-        text-decoration: none; font-weight: bold; margin: 16px 0;
-      ">Reset My Password</a>
-      <p>Or copy: <a href="${resetLink}">${resetLink}</a></p>
-      <p style="color:#888;font-size:12px;">
-        If you didn't request this, ignore this email.
-      </p>
-    </div>
-  `,
-});
+    await brevoClient.sendTransacEmail({
+      sender: { name: "Music App", email: process.env.EMAIL_USER },
+      to: [{ email: user.email, name: user.username }],
+      subject: "🔑 Password Reset Request",
+      htmlContent: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;">
+          <h2 style="color:#7c3aed;">Password Reset</h2>
+          <p>Hi <strong>${user.username}</strong>,</p>
+          <p>You requested a password reset. Click the button below.
+             This link expires in <strong>1 hour</strong>.</p>
+          <a href="${resetLink}" style="
+            display:inline-block;
+            padding:12px 28px;
+            background:#7c3aed;
+            color:white;
+            border-radius:8px;
+            text-decoration:none;
+            font-weight:bold;
+            margin:16px 0;
+            font-size:15px;
+          ">Reset My Password</a>
+          <p style="margin-top:16px;">
+            Or copy this link:<br/>
+            <a href="${resetLink}" style="color:#7c3aed;">${resetLink}</a>
+          </p>
+          <p style="color:#999;font-size:12px;margin-top:24px;">
+            If you didn't request this, you can safely ignore this email.
+          </p>
+        </div>
+      `,
+    });
+    // ───────────────────────────────────────────────────────────────────────
 
     return res.status(200).json({
       message: "If that email is registered, a reset link has been sent.",
     });
   } catch (err) {
-    console.error("forgotPassword error:", {
-      code: err.code,
-      responseCode: err.responseCode,
-      command: err.command,
-      message: err.message,
-    });
+    console.error("forgotPassword error:", err);
     return res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 }
@@ -179,7 +167,6 @@ async function resetPassword(req, res) {
       return res.status(400).json({ message: "Password must be at least 6 characters." });
     }
 
-    // Find user with a matching, non-expired token
     const user = await userModel.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
@@ -189,7 +176,6 @@ async function resetPassword(req, res) {
       return res.status(400).json({ message: "This reset link is invalid or has expired." });
     }
 
-    // Hash new password and clear token fields
     user.password = await bcrypt.hash(password, 10);
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;

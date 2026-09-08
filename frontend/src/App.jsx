@@ -201,7 +201,7 @@ function App() {
           {user ? (
             <>
               <span className="user-pill">
-                {user.username.slice(0, 1).toUpperCase()} <b>{user.username}</b>{" "}
+                {(user.username || "Listener").slice(0, 1).toUpperCase()} <b>{user.username || "Listener"}</b>{" "}
                 <small>{user.role === "artist" ? "Artist" : "Listener"}</small>
               </span>
               <button className="ghost-btn" onClick={logout}>

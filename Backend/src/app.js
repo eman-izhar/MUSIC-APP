@@ -9,15 +9,19 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORRECTED: Allow both local development and live Vercel requests
-const allowedOrigins = [
+const allowedOrigins = new Set([
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
   "http://localhost:5175",
-  "https://music-app-sepia-theta.vercel.app" // Updated to match your current Vercel domain
-];
+  "https://music-app-sepia-theta.vercel.app",
+].filter(Boolean));
 
-app.use(cors({ 
-  origin: allowedOrigins, 
-  credentials: true 
+app.use(cors({
+  origin(origin, callback) {
+    const isVercelPreview = /^https:\/\/music-[a-z0-9-]+\.vercel\.app$/i.test(origin || "");
+    callback(null, !origin || allowedOrigins.has(origin) || isVercelPreview);
+  },
+  credentials: true,
 }));
 
 // ADDED: A root route to verify the server is live without getting a "Cannot GET /" error

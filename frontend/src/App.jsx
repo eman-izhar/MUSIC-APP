@@ -321,7 +321,7 @@ function App() {
             {authMode === "login" && (
               <p style={{ textAlign: "right", margin: "4px 0 0" }}>
                 <a
-                  href="/forgot-password"
+                  href="#/forgot-password"
                   style={{ color: "#a78bfa", fontSize: "13px" }}
                 >
                   Forgot password?

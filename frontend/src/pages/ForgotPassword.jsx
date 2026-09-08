@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import '../App.css'
-import '../pages/ResetPassword.css'
+import './ForgotPassword.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://music-website-zzol.onrender.com/api'
 

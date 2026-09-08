@@ -4,6 +4,15 @@ import "./App.css";
 const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
 
+async function searchITunes(term, entity, limit = 12) {
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
+    term,
+  )}&media=music&entity=${entity}&limit=${limit}&country=PK`;
+  const response = await fetch(url);
+  const data = await response.json();
+  return data.results || [];
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     credentials: "include",
@@ -51,21 +60,32 @@ function App() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      request("/music")
-        .then((data) => {
-          const remoteTracks =
-            data.musics?.map((track) => ({
-              ...track,
-              id: track._id || track.id,
-              artist: track.artist?.username || "Unknown artist",
-              genre: "New release",
-              color: "violet",
-            })) || [];
-          setTracks(remoteTracks);
-        })
+      searchITunes("atif aslam", "song")
+        .then((results) =>
+          setTracks(
+            results
+              .filter((track) => track.previewUrl)
+              .map((track) => ({
+                id: track.trackId,
+                title: track.trackName,
+                artist: track.artistName,
+                genre: track.primaryGenreName || "New release",
+                color: "violet",
+                uri: track.previewUrl,
+              })),
+          ),
+        )
         .catch(() => setTracks([])),
-      request("/music/albums")
-        .then((data) => setAlbums(data.albums || []))
+      searchITunes("atif aslam", "album")
+        .then((results) =>
+          setAlbums(
+            results.map((album) => ({
+              id: album.collectionId,
+              title: album.collectionName,
+              artist: album.artistName,
+            })),
+          ),
+        )
         .catch(() => setAlbums([])),
     ]);
   }, [user]);

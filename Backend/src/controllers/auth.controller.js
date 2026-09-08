@@ -2,8 +2,7 @@ const userModel = require("../models/user.models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const Brevo = require("@getbrevo/brevo");
-const nodemailer = require("nodemailer");
+
 
 // ─── Register ────────────────────────────────────────────────────────────────
 async function resgisterUser(req, res) {
@@ -140,30 +139,28 @@ const resetLink = `${process.env.FRONTEND_URL}/#/reset-password/${token}`;
       `;
 
     if (process.env.BREVO_API_KEY) {
-      const brevoClient = new Brevo.TransactionalEmailsApi();
-      brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
-      await brevoClient.sendTransacEmail({
-        sender: { name: "Music App", email: process.env.EMAIL_USER },
-        to: [{ email: user.email, name: user.username }],
-        subject: "Password Reset Request",
-        htmlContent: emailHtml,
-      });
-    } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      });
-      await transporter.sendMail({
-        from: `Music App <${process.env.EMAIL_USER}>`,
-        to: user.email,
-        subject: "Password Reset Request",
-        html: emailHtml,
-      });
-    } else {
-      throw new Error("Configure BREVO_API_KEY or EMAIL_USER and EMAIL_PASS");
+    // ── Send via Brevo HTTP API (no SDK needed) ──────────────────
+const brevoRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+  method: "POST",
+  headers: {
+    "accept": "application/json",
+    "api-key": process.env.BREVO_API_KEY,
+    "content-type": "application/json",
+  },
+  body: JSON.stringify({
+    sender: { name: "Music App", email: process.env.EMAIL_USER },
+    to: [{ email: user.email, name: user.username }],
+    subject: "🔑 Password Reset Request",
+    htmlContent: emailHtml,
+  }),
+});
+
+if (!brevoRes.ok) {
+  const errData = await brevoRes.json();
+  console.error("Brevo error:", errData);
+  throw new Error("Failed to send email");
+}
+// ─────────────────────────────────────────────────────────────
     }
 
     return res.status(200).json({

@@ -325,16 +325,25 @@ function App() {
       .catch(() => setNotice("Press play on the player to start this track."));
   }
 
+  function scrollToSection(event, sectionId) {
+    event.preventDefault();
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <main className="app-shell">
       <MouseStars />
       <header className="topbar">
-        <a className="brand" href="#top">
+        <a className="brand" href="#top" onClick={(event) => scrollToSection(event, "top")}>
           <span className="brand-mark">◒</span> SONORA
           <span className="brand-dot">.</span>
         </a>
         <nav>
-          {user?.role === "artist" && <a href="#studio">Studio</a>}
+          {user?.role === "artist" && (
+            <a href="#studio" onClick={(event) => scrollToSection(event, "studio")}>
+              Studio
+            </a>
+          )}
         </nav>
         <div className="top-actions">
           {user ? (
@@ -344,7 +353,11 @@ function App() {
                   <a className="browse-nav-btn" href="/#/browse">
                     🎵 Browse Music
                   </a>
-                  <a className="favorites-nav-btn" href="#favorites">
+                  <a
+                    className="favorites-nav-btn"
+                    href="#favorites"
+                    onClick={(event) => scrollToSection(event, "favorites")}
+                  >
                     ♡ Favourites <span className="favorite-nav-count">{favoriteTracks.length}</span>
                   </a>
                 </>

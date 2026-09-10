@@ -93,6 +93,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [albums, setAlbums] = useState([]);
+  const [favoriteTracks, setFavoriteTracks] = useState([]);
   const [activeTrack, setActiveTrack] = useState(null);
   const [query, setQuery] = useState("");
   const [authMode, setAuthMode] = useState("login");
@@ -205,6 +206,13 @@ function App() {
     ]);
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    request("/music/favorites")
+      .then((data) => setFavoriteTracks(data.favorites || []))
+      .catch(() => setFavoriteTracks([]));
+  }, [user]);
+
   function updateAuth(event) {
     setAuthForm({ ...authForm, [event.target.name]: event.target.value });
   }
@@ -240,7 +248,41 @@ function App() {
   async function logout() {
     await request("/auth/logout", { method: "POST" }).catch(() => {});
     setUser(null);
+    setFavoriteTracks([]);
     setNotice("You have been signed out.");
+  }
+
+  function getTrackId(track) {
+    return String(track.trackId || track.id || track._id);
+  }
+
+  async function toggleFavorite(track) {
+    const trackId = getTrackId(track);
+    const isFavorite = favoriteTracks.some(
+      (favorite) => favorite.trackId === trackId,
+    );
+    try {
+      const data = isFavorite
+        ? await request(`/music/favorites/${encodeURIComponent(trackId)}`, {
+            method: "DELETE",
+          })
+        : await request("/music/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              trackId,
+              title: track.title,
+              artist: track.artist,
+              genre: track.genre,
+              color: track.color,
+              uri: track.uri,
+            }),
+          });
+      setFavoriteTracks(data.favorites || []);
+      setNotice(isFavorite ? "Removed from favourites." : "Added to favourites.");
+    } catch (error) {
+      setNotice(error.message);
+    }
   }
 
   async function uploadMusic(event) {
@@ -559,6 +601,13 @@ function App() {
                     <span className="track-number">
                       {String(index + 1).padStart(2, "0")}
                     </span>
+                    <button
+                      className={`favorite-btn ${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "is-favorite" : ""}`}
+                      onClick={() => toggleFavorite(track)}
+                      aria-label={`${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "Remove" : "Add"} ${track.title} ${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "from" : "to"} favourites`}
+                    >
+                      {favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "♥" : "♡"}
+                    </button>
                   </article>
                 ))}
                 {visibleTracks.length === 0 && (
@@ -596,6 +645,43 @@ function App() {
                 </div>
               ))}
             </aside>
+          </section>
+          <section className="favorites-panel" id="favorites">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">KEPT CLOSE</p>
+                <h2>Your favourites</h2>
+              </div>
+              <span className="count-label">{favoriteTracks.length} saved</span>
+            </div>
+            {favoriteTracks.length > 0 ? (
+              <div className="favorite-list">
+                {favoriteTracks.map((track) => (
+                  <article className="favorite-row" key={track.trackId}>
+                    <button
+                      className={`play-btn ${track.color || "violet"}`}
+                      onClick={() => playTrack({ ...track, id: track.trackId })}
+                      aria-label={`Play ${track.title}`}
+                    >
+                      {activeTrack?.id === track.trackId ? "Ⅱ" : "▶"}
+                    </button>
+                    <div className="track-meta">
+                      <strong>{track.title}</strong>
+                      <span>{track.artist} <i>·</i> {track.genre}</span>
+                    </div>
+                    <button
+                      className="favorite-btn is-favorite"
+                      onClick={() => toggleFavorite(track)}
+                      aria-label={`Remove ${track.title} from favourites`}
+                    >
+                      ♥
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-state">Your saved tracks will appear here.</p>
+            )}
           </section>
           {user.role === "artist" && (
             <section className="studio" id="studio">

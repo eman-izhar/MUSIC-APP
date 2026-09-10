@@ -72,3 +72,10 @@
 @keyframes guitar-note-float { 0%, 100% { opacity: .65; transform: translateY(6px) rotate(-8deg); } 50% { opacity: 1; transform: translateY(-12px) rotate(8deg); } }
 @media (max-width: 760px) { .guitar-scene { margin: 26px auto 0; height: 165px; transform: scale(.86); transform-origin: left top; } }
 @media (prefers-reduced-motion: reduce) { .guitar, .guitar-note { animation: none; } }
+.favorite-btn { border: 0; background: none; color: var(--muted); font-size: 22px; line-height: 1; padding: 4px; transition: color .2s ease, transform .2s ease; }
+.favorite-btn:hover, .favorite-btn.is-favorite { color: var(--orange); transform: scale(1.12); }
+.favorites-panel { max-width: 1230px; margin-top: 70px; padding-top: 36px; border-top: 1px solid var(--line); }
+.favorite-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(30px, 7vw, 110px); }
+.favorite-row { display: grid; grid-template-columns: 48px 1fr 28px; align-items: center; gap: 15px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.favorite-row .track-meta span { color: var(--muted); font-size: 11px; }
+@media (max-width: 760px) { .favorite-list { display: block; } .favorite-row { grid-template-columns: 42px 1fr 28px; gap: 11px; } }

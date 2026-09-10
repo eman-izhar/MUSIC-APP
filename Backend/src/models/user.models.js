@@ -1,5 +1,17 @@
 const mongoose = require("mongoose");
 
+const favoriteTrackSchema = new mongoose.Schema(
+  {
+    trackId: { type: String, required: true },
+    title: { type: String, required: true },
+    artist: { type: String, default: "Unknown artist" },
+    genre: { type: String, default: "New release" },
+    color: { type: String, default: "violet" },
+    uri: { type: String, default: "" },
+  },
+  { _id: false },
+);
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -26,6 +38,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["user", "artist"],
     default: "user",
+  },
+  favoriteTracks: {
+    type: [favoriteTrackSchema],
+    default: [],
   },
   // ── Forgot Password fields ──────────────────────────────
   resetPasswordToken: {

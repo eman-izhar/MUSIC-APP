@@ -1,5 +1,6 @@
 const musicModel = require("../models/music.models");
 const albumModel = require("../models/album.model");
+const userModel = require("../models/user.models");
 const jwt = require("jsonwebtoken");
 const { uploadFile } = require("../service/storage.services");
 
@@ -87,10 +88,54 @@ async function getAllAlbumsById(req, res) {
     albums,
   });
 }
+
+async function getFavorites(req, res) {
+  const user = await userModel.findById(req.user.id).select("favoriteTracks");
+  res.status(200).json({ favorites: user?.favoriteTracks || [] });
+}
+
+async function addFavorite(req, res) {
+  const { trackId, title, artist, genre, color, uri } = req.body;
+  if (!trackId || !title) {
+    return res.status(400).json({ message: "trackId and title are required" });
+  }
+
+  const favorite = {
+    trackId: String(trackId),
+    title,
+    artist: artist || "Unknown artist",
+    genre: genre || "New release",
+    color: color || "violet",
+    uri: uri || "",
+  };
+  const user = await userModel.findOneAndUpdate(
+    { _id: req.user.id, "favoriteTracks.trackId": { $ne: favorite.trackId } },
+    { $push: { favoriteTracks: favorite } },
+    { new: true, projection: "favoriteTracks" },
+  );
+
+  if (!user) {
+    const existingUser = await userModel.findById(req.user.id).select("favoriteTracks");
+    return res.status(200).json({ favorites: existingUser?.favoriteTracks || [] });
+  }
+  res.status(201).json({ favorites: user.favoriteTracks });
+}
+
+async function removeFavorite(req, res) {
+  const user = await userModel.findByIdAndUpdate(
+    req.user.id,
+    { $pull: { favoriteTracks: { trackId: String(req.params.trackId) } } },
+    { new: true, projection: "favoriteTracks" },
+  );
+  res.status(200).json({ favorites: user?.favoriteTracks || [] });
+}
 module.exports = {
   createMusic,
   createAlbum,
   getAllMusics,
   getAllAlbums,
   getAllAlbumsById,
+  getFavorites,
+  addFavorite,
+  removeFavorite,
 };

@@ -340,20 +340,14 @@ function App() {
           {user ? (
             <>
               {user?.role === "user" && (
-                <a
-                  href="/#/browse"
-                  style={{
-                    padding: "8px 18px",
-                    background: "#7c3aed",
-                    color: "#fff",
-                    borderRadius: "20px",
-                    textDecoration: "none",
-                    fontSize: "13px",
-                    fontWeight: "600",
-                  }}
-                >
-                  🎵 Browse Music
-                </a>
+                <>
+                  <a className="browse-nav-btn" href="/#/browse">
+                    🎵 Browse Music
+                  </a>
+                  <a className="favorites-nav-btn" href="#favorites">
+                    ♡ Favourites <span className="favorite-nav-count">{favoriteTracks.length}</span>
+                  </a>
+                </>
               )}
               <span className="user-pill">
                 {(user.username || "Listener").slice(0, 1).toUpperCase()} <b>{user.username || "Listener"}</b>{" "}

@@ -353,11 +353,7 @@ function App() {
                   <a className="browse-nav-btn" href="/#/browse">
                     🎵 Browse Music
                   </a>
-                  <a
-                    className="favorites-nav-btn"
-                    href="#favorites"
-                    onClick={(event) => scrollToSection(event, "favorites")}
-                  >
+                  <a className="favorites-nav-btn" href="/#/favorites">
                     ♡ Favourites <span className="favorite-nav-count">{favoriteTracks.length}</span>
                   </a>
                 </>

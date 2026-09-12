@@ -6,6 +6,7 @@ import App from './App.jsx'
 import ForgotPassword from './pages/ForgotPassword.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 import Browse from './pages/Browse.jsx'
+import Favorites from './pages/Favorites.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/forgot-password"       element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/browse"                element={<Browse />} />
+        <Route path="/favorites"             element={<Favorites />} />
       </Routes>
     </HashRouter>
   </StrictMode>,

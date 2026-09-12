@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+.favorites-page { min-height: 100vh; padding: 0 clamp(20px, 7vw, 100px) 90px; background: radial-gradient(circle at 82% 12%, rgba(109, 48, 180, .28), transparent 28rem), #0b0b0d; color: #f6f1ff; font-family: 'Space Grotesk', sans-serif; }
+.favorites-topbar { height: 92px; border-bottom: 1px solid #2b2931; display: flex; align-items: center; justify-content: space-between; text-transform: uppercase; letter-spacing: .08em; font-size: 12px; }
+.favorites-brand { color: #f6f1ff; font-weight: 700; letter-spacing: .22em; text-decoration: none; }
+.favorites-brand span:first-child { color: #d8ff4e; font-size: 27px; margin-right: 8px; }
+.favorites-dot { color: #ff775d; }
+.favorites-actions { display: flex; align-items: center; gap: 24px; color: #8e8998; }
+.favorites-actions a { color: #d8ff4e; text-decoration: none; }
+.favorites-hero { max-width: 900px; padding: clamp(80px, 13vh, 150px) 0 80px; }
+.favorites-eyebrow { color: #d8ff4e; font: 11px 'DM Mono', monospace; letter-spacing: .16em; }
+.favorites-hero h1 { margin: 24px 0; font-size: clamp(58px, 9vw, 120px); line-height: .9; letter-spacing: -.08em; font-weight: 600; }
+.favorites-hero h1 em { color: #a777ff; font-style: normal; }
+.favorites-hero > p:last-child { color: #8e8998; font-size: 16px; }
+.favorites-content { max-width: 1000px; border-top: 1px solid #2b2931; padding-top: 35px; }
+.favorites-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; }
+.favorites-heading h2 { margin: 0 0 25px; font-size: 26px; }
+.favorites-heading span { color: #8e8998; font: 11px 'DM Mono', monospace; text-transform: uppercase; }
+.favorites-track { display: grid; grid-template-columns: 35px 42px 1fr 30px; align-items: center; gap: 18px; padding: 16px 0; border-bottom: 1px solid #2b2931; }
+.favorites-number { color: #8e8998; font: 11px 'DM Mono', monospace; }
+.favorites-play { width: 38px; height: 38px; border: 0; border-radius: 50%; color: #101014; font-size: 12px; }
+.favorites-play.violet { background: #a777ff; }.favorites-play.orange { background: #ff775d; }.favorites-play.cyan { background: #68e4d4; }.favorites-play.pink { background: #ed8cbb; }
+.favorites-track-meta { display: grid; gap: 5px; }.favorites-track-meta strong { font-size: 15px; }.favorites-track-meta span { color: #8e8998; font-size: 12px; }.favorites-track-meta i { color: #ff775d; font-style: normal; }
+.favorites-remove { border: 0; background: none; color: #ff775d; font-size: 21px; padding: 4px; }
+.favorites-empty, .favorites-message { padding: 80px 20px; text-align: center; border: 1px solid #2b2931; background: rgba(22, 21, 26, .65); }
+.favorites-empty > span { color: #ff775d; font-size: 40px; }.favorites-empty h2 { margin: 20px 0 10px; }.favorites-empty p, .favorites-message p { color: #8e8998; }
+.favorites-cta { display: inline-block; margin-top: 22px; padding: 13px 18px; background: #d8ff4e; color: #15120e; text-decoration: none; text-transform: uppercase; font: 11px 'DM Mono', monospace; }
+.favorites-message { max-width: 700px; margin: 18vh auto; }.favorites-message h1 { font-size: clamp(35px, 6vw, 70px); letter-spacing: -.06em; }.favorites-notice { padding: 13px 16px; background: #d8ff4e; color: #111; max-width: 420px; }.favorites-status { padding-top: 35vh; text-align: center; color: #8e8998; }.favorites-audio { position: fixed; right: 24px; bottom: 24px; max-width: 320px; }
+@media (max-width: 650px) { .favorites-topbar { height: 72px; }.favorites-actions span { display: none; }.favorites-hero { padding-top: 90px; }.favorites-track { grid-template-columns: 25px 40px 1fr 24px; gap: 10px; }.favorites-audio { left: 20px; right: 20px; bottom: 16px; width: calc(100% - 40px); } }

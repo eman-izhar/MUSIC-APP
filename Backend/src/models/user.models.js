@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     unique: true,
     required: true,
+    trim: true,
   },
   email: {
     type: String,
@@ -38,6 +39,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ["user", "artist"],
     default: "user",
+  },
+  profileImage: {
+    type: String,
+    default: "",
   },
   favoriteTracks: {
     type: [favoriteTrackSchema],

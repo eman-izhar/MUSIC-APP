@@ -40,7 +40,7 @@ async function resgisterUser(req, res) {
 
   return res.status(201).json({
     message: "user registered successfully",
-    user: { id: user._id, username: user.username, role: user.role },
+    user: { id: user._id, username: user.username, email: user.email, role: user.role, profileImage: user.profileImage },
   });
 }
 
@@ -62,7 +62,7 @@ async function loginUser(req, res) {
 
   return res.status(200).json({
     message: "login successful",
-    user: { id: user._id, username: user.username, role: user.role },
+    user: { id: user._id, username: user.username, email: user.email, role: user.role, profileImage: user.profileImage },
   });
 }
 
@@ -110,7 +110,7 @@ async function loginWithGoogle(req, res) {
     setAuthCookie(res, user);
     return res.status(200).json({
       message: "Google login successful",
-      user: { id: user._id, username: user.username, role: user.role },
+      user: { id: user._id, username: user.username, email: user.email, role: user.role, profileImage: user.profileImage },
     });
   } catch (error) {
     console.error("Google login error:", error);
@@ -120,7 +120,42 @@ async function loginWithGoogle(req, res) {
 
 // ─── Get Me ──────────────────────────────────────────────────────────────────
 async function getMe(req, res) {
-  return res.status(200).json({ user: req.user });
+  const user = await userModel.findById(req.user.id).select("username email role profileImage");
+  return res.status(200).json({ user });
+}
+
+// ─── Update Profile ─────────────────────────────────────────────────────────
+async function updateProfile(req, res) {
+  try {
+    const { username, profileImage } = req.body;
+    const trimmedUsername = username?.trim();
+
+    if (!trimmedUsername || trimmedUsername.length < 2 || trimmedUsername.length > 30) {
+      return res.status(400).json({ message: "Name must be between 2 and 30 characters." });
+    }
+    if (profileImage && (!profileImage.startsWith("data:image/") || profileImage.length > 700000)) {
+      return res.status(400).json({ message: "Choose an image smaller than 500 KB." });
+    }
+
+    const existingUser = await userModel.findOne({
+      username: trimmedUsername,
+      _id: { $ne: req.user.id },
+    });
+    if (existingUser) {
+      return res.status(409).json({ message: "That name is already in use." });
+    }
+
+    const user = await userModel.findByIdAndUpdate(
+      req.user.id,
+      { username: trimmedUsername, profileImage: profileImage || "" },
+      { new: true, runValidators: true, select: "username email role profileImage" },
+    );
+    if (!user) return res.status(404).json({ message: "Account not found." });
+    return res.status(200).json({ message: "Profile updated.", user });
+  } catch (error) {
+    console.error("updateProfile error:", error);
+    return res.status(500).json({ message: "Could not update your profile." });
+  }
 }
 
 // ─── Logout ──────────────────────────────────────────────────────────────────
@@ -256,6 +291,7 @@ module.exports = {
   loginUser,
   loginWithGoogle,
   getMe,
+  updateProfile,
   logoutUser,
   forgotPassword,
   resetPassword,

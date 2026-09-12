@@ -8,6 +8,7 @@ router.post("/register", authController.resgisterUser);
 router.post("/login", authController.loginUser);
 router.post("/google", authController.loginWithGoogle);
 router.get("/me", authAuthenticated, authController.getMe);
+router.put("/profile", authAuthenticated, authController.updateProfile);
 router.post("/logout", authController.logoutUser);
 
 // ─── Forgot / Reset Password (NEW) ───────────────────────

@@ -106,6 +106,9 @@ function App() {
   const [upload, setUpload] = useState({ title: "", file: null });
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({ username: "", profileImage: "" });
   const googleButtonRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -215,6 +218,47 @@ function App() {
 
   function updateAuth(event) {
     setAuthForm({ ...authForm, [event.target.name]: event.target.value });
+  }
+
+  function openProfile() {
+    setProfileForm({
+      username: user.username || "",
+      profileImage: user.profileImage || "",
+    });
+    setProfileOpen(true);
+  }
+
+  function chooseProfileImage(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 500 * 1024) {
+      setNotice("Choose an image smaller than 500 KB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () =>
+      setProfileForm((current) => ({ ...current, profileImage: reader.result }));
+    reader.readAsDataURL(file);
+  }
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    setLoading(true);
+    setNotice("");
+    try {
+      const data = await request("/auth/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileForm),
+      });
+      setUser(data.user);
+      setProfileOpen(false);
+      setNotice("Profile updated.");
+    } catch (error) {
+      setNotice(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function submitAuth(event) {
@@ -345,7 +389,20 @@ function App() {
             </a>
           )}
         </nav>
-        <div className="top-actions">
+        {user && (
+          <button
+            className="mobile-nav-toggle"
+            type="button"
+            aria-label={mobileNavOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((isOpen) => !isOpen)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        )}
+        <div className={`top-actions ${user ? "desktop-actions" : ""}`}>
           {user ? (
             <>
               {user?.role === "user" && (
@@ -358,10 +415,15 @@ function App() {
                   </a>
                 </>
               )}
-              <span className="user-pill">
-                {(user.username || "Listener").slice(0, 1).toUpperCase()} <b>{user.username || "Listener"}</b>{" "}
-                <small>{user.role === "artist" ? "Artist" : "Listener"}</small>
-              </span>
+              <button className="user-pill" onClick={openProfile} aria-label="Open profile settings">
+                {user.profileImage ? (
+                  <img src={user.profileImage} alt="" />
+                ) : (
+                  <span>{(user.username || "Listener").slice(0, 1).toUpperCase()}</span>
+                )}
+                <b>{user.username || "Listener"}</b>
+                <small>{user.role === "artist" ? "Artist account" : "Listener account"}</small>
+              </button>
               <button className="ghost-btn" onClick={logout}>
                 Log out
               </button>
@@ -375,11 +437,76 @@ function App() {
             </button>
           )}
         </div>
+        {user && (
+          <div className={`mobile-nav-menu ${mobileNavOpen ? "is-open" : ""}`}>
+            {user.role === "artist" && (
+              <a href="#studio" onClick={(event) => { scrollToSection(event, "studio"); setMobileNavOpen(false); }}>
+                Studio
+              </a>
+            )}
+            {user.role === "user" && (
+              <>
+                <a href="/#/browse" onClick={() => setMobileNavOpen(false)}>🎵 Browse Music</a>
+                <a href="/#/favorites" onClick={() => setMobileNavOpen(false)}>
+                  ♡ Favourites <span className="favorite-nav-count">{favoriteTracks.length}</span>
+                </a>
+              </>
+            )}
+            <div className="mobile-nav-account">
+              <span>{user.username || "Listener"}</span>
+              <button className="ghost-btn" onClick={() => { logout(); setMobileNavOpen(false); }}>
+                Log out
+              </button>
+            </div>
+          </div>
+        )}
       </header>
       {notice && (
         <div className="notice">
           {notice}
           <button onClick={() => setNotice("")}>×</button>
+        </div>
+      )}
+      {profileOpen && (
+        <div className="profile-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setProfileOpen(false)}>
+          <form className="profile-card" onSubmit={saveProfile}>
+            <div className="card-top">
+              <span>Profile settings</span>
+              <button type="button" className="profile-close" onClick={() => setProfileOpen(false)} aria-label="Close profile settings">×</button>
+            </div>
+            <div className="profile-preview">
+              {profileForm.profileImage ? (
+                <img src={profileForm.profileImage} alt="Profile preview" />
+              ) : (
+                <span>{(profileForm.username || "L").slice(0, 1).toUpperCase()}</span>
+              )}
+              <label className="profile-upload">
+                Change image
+                <input type="file" accept="image/*" onChange={chooseProfileImage} />
+              </label>
+              {profileForm.profileImage && (
+                <button type="button" className="remove-image" onClick={() => setProfileForm({ ...profileForm, profileImage: "" })}>
+                  Remove
+                </button>
+              )}
+            </div>
+            <label className="profile-field">
+              <span>Name</span>
+              <input
+                value={profileForm.username}
+                onChange={(event) => setProfileForm({ ...profileForm, username: event.target.value })}
+                minLength="2"
+                maxLength="30"
+                required
+              />
+            </label>
+            <div className="profile-account-type">
+              <span>Account type</span>
+              <strong>{user.role === "artist" ? "Artist" : "Listener"}</strong>
+            </div>
+            <p className="profile-email">{user.email}</p>
+            <button className="primary-btn" disabled={loading}>{loading ? "Saving..." : "Save profile"}</button>
+          </form>
         </div>
       )}
       {!user ? (

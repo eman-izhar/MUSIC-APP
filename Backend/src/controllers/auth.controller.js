@@ -133,8 +133,8 @@ async function updateProfile(req, res) {
     if (!trimmedUsername || trimmedUsername.length < 2 || trimmedUsername.length > 30) {
       return res.status(400).json({ message: "Name must be between 2 and 30 characters." });
     }
-    if (profileImage && (!profileImage.startsWith("data:image/") || profileImage.length > 700000)) {
-      return res.status(400).json({ message: "Choose an image smaller than 500 KB." });
+    if (profileImage && (!profileImage.startsWith("data:image/") || profileImage.length > 1400000)) {
+      return res.status(400).json({ message: "Choose an image smaller than 1 MB." });
     }
 
     const existingUser = await userModel.findOne({

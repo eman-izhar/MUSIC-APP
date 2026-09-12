@@ -231,8 +231,8 @@ function App() {
   function chooseProfileImage(event) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/") || file.size > 500 * 1024) {
-      setNotice("Choose an image smaller than 500 KB.");
+    if (!file.type.startsWith("image/") || file.size > 1024 * 1024) {
+      setNotice("Choose an image smaller than 1 MB.");
       return;
     }
     const reader = new FileReader();

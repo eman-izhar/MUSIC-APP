@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import Browse from "./pages/Browse.jsx";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+async function searchITunes(term, entity, limit = 12) {
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
+    term,
+  )}&media=music&entity=${entity}&limit=${limit}&country=PK`;
+  const response = await fetch(url);
+  const data = await response.json();
+  return data.results || [];
+}
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
@@ -83,7 +91,11 @@ function MouseStars() {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [tracks, setTracks] = useState([]);
+  const [albums, setAlbums] = useState([]);
   const [favoriteTracks, setFavoriteTracks] = useState([]);
+  const [activeTrack, setActiveTrack] = useState(null);
+  const [query, setQuery] = useState("");
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({
     username: "",
@@ -98,6 +110,13 @@ function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({ username: "", profileImage: "" });
   const googleButtonRef = useRef(null);
+  const audioRef = useRef(null);
+
+  const visibleTracks = tracks.filter((track) =>
+    `${track.title} ${track.artist} ${track.genre}`
+      .toLowerCase()
+      .includes(query.toLowerCase()),
+  );
 
   useEffect(() => {
     request("/auth/me")
@@ -152,6 +171,39 @@ function App() {
     document.head.appendChild(script);
     return () => script.remove();
   }, [authMode, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      searchITunes("atif aslam", "song")
+        .then((results) =>
+          setTracks(
+            results
+              .filter((track) => track.previewUrl)
+              .map((track) => ({
+                id: track.trackId,
+                title: track.trackName,
+                artist: track.artistName,
+                genre: track.primaryGenreName || "New release",
+                color: "violet",
+                uri: track.previewUrl,
+              })),
+          ),
+        )
+        .catch(() => setTracks([])),
+      searchITunes("atif aslam", "album")
+        .then((results) =>
+          setAlbums(
+            results.map((album) => ({
+              id: album.collectionId,
+              title: album.collectionName,
+              artist: album.artistName,
+            })),
+          ),
+        )
+        .catch(() => setAlbums([])),
+    ]);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -240,6 +292,28 @@ function App() {
     setNotice("You have been signed out.");
   }
 
+  function getTrackId(track) {
+    return String(track.trackId || track.id || track._id);
+  }
+
+  async function toggleFavorite(track) {
+    const trackId = getTrackId(track);
+    const isFavorite = favoriteTracks.some((favorite) => favorite.trackId === trackId);
+    try {
+      const data = isFavorite
+        ? await request(`/music/favorites/${encodeURIComponent(trackId)}`, { method: "DELETE" })
+        : await request("/music/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ trackId, title: track.title, artist: track.artist, genre: track.genre, color: track.color, uri: track.uri }),
+          });
+      setFavoriteTracks(data.favorites || []);
+      setNotice(isFavorite ? "Removed from favourites." : "Added to favourites.");
+    } catch (error) {
+      setNotice(error.message);
+    }
+  }
+
   async function uploadMusic(event) {
     event.preventDefault();
     if (!upload.title || !upload.file)
@@ -249,10 +323,11 @@ function App() {
     body.append("music", upload.file);
     setLoading(true);
     try {
-      await request("/music/uploadMusic", {
+      const data = await request("/music/uploadMusic", {
         method: "POST",
         body,
       });
+      setTracks((currentTracks) => [{ ...data.music, artist: user.username, genre: "Fresh upload", color: "pink" }, ...currentTracks]);
       setUpload({ title: "", file: null });
       setNotice("Track uploaded to your orbit.");
     } catch (error) {
@@ -260,6 +335,13 @@ function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function playTrack(track) {
+    setActiveTrack(track);
+    if (!track.uri || !audioRef.current) return;
+    audioRef.current.src = track.uri;
+    audioRef.current.play().catch(() => setNotice("Press play on the player to start the track."));
   }
 
   function scrollToSection(event, sectionId) {
@@ -550,7 +632,62 @@ function App() {
         </section>
       ) : (
         <>
-          {user.role === "user" && <Browse embedded initialUser={user} />}
+          <section className="dashboard-hero" id="discover">
+            <div>
+              <p className="eyebrow">YOUR DAILY FREQUENCY</p>
+              <h1>Find your<br /><em>next favorite.</em></h1>
+              <p className="hero-sub">A living collection of sounds for every version of you.</p>
+            </div>
+            <div className="hero-orbit">
+              <span className="orbit-shadow"></span><span className="orbit-ring ring-one"></span><span className="orbit-ring ring-two"></span><span className="orbit-ring ring-three"></span>
+              <span className="orbit-note note-one">♪</span><span className="orbit-note note-two">♫</span>
+              <span className="orbit-disc"><span className="disc-grooves"></span><span className="disc-label">SONORA</span><span className="disc-hole"></span></span>
+              <span className="orbit-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span className="orbit-label">LIVE<br />SIGNAL</span>
+            </div>
+          </section>
+          <section className="content-grid">
+            <div className="feed-panel">
+              <div className="section-heading">
+                <div><p className="eyebrow">THE LIBRARY</p><h2>Made for your ears</h2></div>
+                <label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search the signal" /></label>
+              </div>
+              <div className="track-list">
+                {visibleTracks.map((track, index) => (
+                  <article className={`track-row ${activeTrack?.id === track.id ? "is-playing" : ""}`} key={track.id || track._id || index}>
+                    <button className={`play-btn ${track.color || "violet"}`} onClick={() => playTrack(track)} aria-label={`Play ${track.title}`}>
+                      {activeTrack?.id === track.id ? "Ⅱ" : "▶"}
+                    </button>
+                    <div className="track-meta"><strong>{track.title}</strong><span>{track.artist || "Unknown artist"} <i>·</i> {track.genre || "New release"}</span></div>
+                    <div className="mini-wave">▂▅▃▇▆▃</div><span className="track-number">{String(index + 1).padStart(2, "0")}</span>
+                    <button className={`favorite-btn ${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "is-favorite" : ""}`} onClick={() => toggleFavorite(track)} aria-label={`Toggle ${track.title} favourite`}>
+                      {favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "♥" : "♡"}
+                    </button>
+                  </article>
+                ))}
+                {visibleTracks.length === 0 && <p className="empty-state">No tracks match that search.</p>}
+              </div>
+            </div>
+            <aside className="side-panel" id="albums">
+              <div className="section-heading"><div><p className="eyebrow">COLLECTED WORLDS</p><h2>Albums</h2></div><span className="count-label">{albums.length} total</span></div>
+              {albums.map((album, index) => (
+                <div className="album-item" key={album._id || album.id || index}>
+                  <div className={`album-art art-${index % 3}`}><span>{["◌", "✦", "≈"][index % 3]}</span></div>
+                  <div><strong>{album.title}</strong><span>{album.artist || "Various artists"}</span></div><button aria-label={`Open ${album.title}`}>↗</button>
+                </div>
+              ))}
+            </aside>
+          </section>
+          <section className="favorites-panel" id="favorites">
+            <div className="section-heading"><div><p className="eyebrow">KEPT CLOSE</p><h2>Your favourites</h2></div><span className="count-label">{favoriteTracks.length} saved</span></div>
+            {favoriteTracks.length > 0 ? <div className="favorite-list">{favoriteTracks.map((track) => (
+              <article className="favorite-row" key={track.trackId}>
+                <button className={`play-btn ${track.color || "violet"}`} onClick={() => playTrack({ ...track, id: track.trackId })} aria-label={`Play ${track.title}`}>{activeTrack?.id === track.trackId ? "Ⅱ" : "▶"}</button>
+                <div className="track-meta"><strong>{track.title}</strong><span>{track.artist} <i>·</i> {track.genre}</span></div>
+                <button className="favorite-btn is-favorite" onClick={() => toggleFavorite(track)} aria-label={`Remove ${track.title} from favourites`}>♥</button>
+              </article>
+            ))}</div> : <p className="empty-state">Your saved tracks will appear here.</p>}
+          </section>
           {user.role === "artist" && (
             <section className="studio" id="studio">
               <div>
@@ -596,6 +733,9 @@ function App() {
           VOLUME UP <b>◖◗</b>
         </span>
       </footer>
+      <div className="player-dock">
+        {activeTrack ? <><div className="now-playing"><span className="equalizer">▂▅▇</span><div><small>NOW PLAYING</small><strong>{activeTrack.title}</strong></div></div><audio ref={audioRef} controls /></> : <span>Select a track to start listening</span>}
+      </div>
     </main>
   );
 }

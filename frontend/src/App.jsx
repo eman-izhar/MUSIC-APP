@@ -5,10 +5,20 @@ const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-async function searchITunes(term, entity, limit = 12) {
+const BROWSE_CATEGORIES = [
+  { term: "atif aslam", country: "PK" },
+  { term: "arijit singh", country: "IN" },
+  { term: "pop hits 2024", country: "US" },
+  { term: "pop", country: "US" },
+  { term: "hip hop rap", country: "US" },
+  { term: "rnb soul", country: "US" },
+  { term: "indie alternative", country: "US" },
+];
+
+async function searchITunes(term, entity, limit = 12, country = "PK") {
   const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
     term,
-  )}&media=music&entity=${entity}&limit=${limit}&country=PK`;
+  )}&media=music&entity=${entity}&limit=${limit}&country=${country}`;
   const response = await fetch(url);
   const data = await response.json();
   return data.results || [];
@@ -175,23 +185,26 @@ function App() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      searchITunes("atif aslam", "song")
-        .then((results) =>
-          setTracks(
-            results
-              .filter((track) => track.previewUrl)
-              .map((track) => ({
-                id: track.trackId,
-                title: track.trackName,
-                artist: track.artistName,
-                genre: track.primaryGenreName || "New release",
-                artwork: track.artworkUrl100?.replace("100x100bb", "300x300bb"),
-                color: "violet",
-                uri: track.previewUrl,
-              })),
-          ),
-        )
-        .catch(() => setTracks([])),
+      Promise.all(
+        BROWSE_CATEGORIES.map(({ term, country }) =>
+          searchITunes(term, "song", 24, country).catch(() => []),
+        ),
+      ).then((categoryResults) => {
+        const uniqueTracks = new Map();
+        categoryResults.flat().forEach((track) => {
+          if (!track.previewUrl || uniqueTracks.has(track.trackId)) return;
+          uniqueTracks.set(track.trackId, {
+            id: track.trackId,
+            title: track.trackName,
+            artist: track.artistName,
+            genre: track.primaryGenreName || "New release",
+            artwork: track.artworkUrl100?.replace("100x100bb", "300x300bb"),
+            color: "violet",
+            uri: track.previewUrl,
+          });
+        });
+        setTracks(Array.from(uniqueTracks.values()));
+      }),
       searchITunes("atif aslam", "album")
         .then((results) =>
           setAlbums(
@@ -360,8 +373,13 @@ function App() {
         </a>
         <nav>
           {user?.role === "artist" && (
-            <a href="#studio" onClick={(event) => scrollToSection(event, "studio")}>
+              <a href="#studio" onClick={(event) => scrollToSection(event, "studio")}>
               Studio
+            </a>
+          )}
+          {user?.role === "user" && (
+            <a href="#albums" onClick={(event) => scrollToSection(event, "albums")}>
+              Albums
             </a>
           )}
         </nav>
@@ -422,6 +440,9 @@ function App() {
             )}
             {user.role === "user" && (
               <>
+                <a href="#albums" onClick={(event) => { scrollToSection(event, "albums"); setMobileNavOpen(false); }}>
+                  Albums
+                </a>
                 <a href="/#/browse" onClick={() => setMobileNavOpen(false)}>🎵 Browse Music</a>
                 <a href="/#/favorites" onClick={() => setMobileNavOpen(false)}>
                   ♡ Favourites <span className="favorite-nav-count">{favoriteTracks.length}</span>

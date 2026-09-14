@@ -6,13 +6,13 @@ const API_URL =
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const BROWSE_CATEGORIES = [
-  { term: "atif aslam", country: "PK" },
-  { term: "arijit singh", country: "IN" },
-  { term: "pop hits 2024", country: "US" },
-  { term: "pop", country: "US" },
-  { term: "hip hop rap", country: "US" },
-  { term: "rnb soul", country: "US" },
-  { term: "indie alternative", country: "US" },
+  { id: "pakistani", label: "Pakistani", term: "atif aslam", country: "PK" },
+  { id: "bollywood", label: "Bollywood", term: "arijit singh", country: "IN" },
+  { id: "international", label: "International", term: "pop hits 2024", country: "US" },
+  { id: "pop", label: "Pop", term: "pop", country: "US" },
+  { id: "hiphop", label: "Hip-Hop", term: "hip hop rap", country: "US" },
+  { id: "rnb", label: "R&B", term: "rnb soul", country: "US" },
+  { id: "indie", label: "Indie", term: "indie alternative", country: "US" },
 ];
 
 async function searchITunes(term, entity, limit = 12, country = "PK") {
@@ -102,6 +102,7 @@ function MouseStars() {
 function App() {
   const [user, setUser] = useState(null);
   const [tracks, setTracks] = useState([]);
+  const [trackSections, setTrackSections] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [favoriteTracks, setFavoriteTracks] = useState([]);
   const [activeTrack, setActiveTrack] = useState(null);
@@ -123,9 +124,7 @@ function App() {
   const audioRef = useRef(null);
 
   const visibleTracks = tracks.filter((track) =>
-    `${track.title} ${track.artist} ${track.genre}`
-      .toLowerCase()
-      .includes(query.toLowerCase()),
+    `${track.title} ${track.artist} ${track.genre}`.toLowerCase().includes(query.toLowerCase()),
   );
 
   useEffect(() => {
@@ -190,20 +189,24 @@ function App() {
           searchITunes(term, "song", 24, country).catch(() => []),
         ),
       ).then((categoryResults) => {
-        const uniqueTracks = new Map();
-        categoryResults.flat().forEach((track) => {
-          if (!track.previewUrl || uniqueTracks.has(track.trackId)) return;
-          uniqueTracks.set(track.trackId, {
-            id: track.trackId,
-            title: track.trackName,
-            artist: track.artistName,
-            genre: track.primaryGenreName || "New release",
-            artwork: track.artworkUrl100?.replace("100x100bb", "300x300bb"),
-            color: "violet",
-            uri: track.previewUrl,
+        const sections = categoryResults.map((categoryTracks, index) => {
+          const uniqueTracks = new Map();
+          categoryTracks.forEach((track) => {
+            if (!track.previewUrl || uniqueTracks.has(track.trackId)) return;
+            uniqueTracks.set(track.trackId, {
+              id: track.trackId,
+              title: track.trackName,
+              artist: track.artistName,
+              genre: track.primaryGenreName || "New release",
+              artwork: track.artworkUrl100?.replace("100x100bb", "300x300bb"),
+              color: "violet",
+              uri: track.previewUrl,
+            });
           });
+          return { ...BROWSE_CATEGORIES[index], tracks: Array.from(uniqueTracks.values()) };
         });
-        setTracks(Array.from(uniqueTracks.values()));
+        setTrackSections(sections);
+        setTracks(sections.flatMap((section) => section.tracks));
       }),
       searchITunes("atif aslam", "album")
         .then((results) =>
@@ -668,43 +671,50 @@ function App() {
               <span className="orbit-label">LIVE<br />SIGNAL</span>
             </div>
           </section>
-          <section className="content-grid">
-            <div className="feed-panel">
-              <div className="section-heading">
-                <div><p className="eyebrow">THE LIBRARY</p><h2>Made for your ears</h2></div>
-                <label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search the signal" /></label>
-              </div>
-              <div className="track-card-grid">
-                {visibleTracks.map((track, index) => (
-                  <article className={`track-card ${activeTrack?.id === track.id ? "is-playing" : ""}`} key={track.id || track._id || index}>
-                    <div className="track-card-art-wrap">
-                      <img className="track-card-art" src={track.artwork} alt={track.title} loading="lazy" />
-                      <button className={`track-card-play ${track.color || "violet"}`} onClick={() => playTrack(track)} aria-label={`Play ${track.title}`}>
-                        {activeTrack?.id === track.id ? "Ⅱ" : "▶"}
-                      </button>
-                      <button className={`track-card-favorite ${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "is-favorite" : ""}`} onClick={() => toggleFavorite(track)} aria-label={`Toggle ${track.title} favourite`}>
-                        {favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "♥" : "♡"}
-                      </button>
-                    </div>
-                    <div className="track-card-info">
-                      <strong>{track.title}</strong>
-                      <span>{track.artist || "Unknown artist"}</span>
-                      <small>▷ 30s preview</small>
-                    </div>
-                  </article>
-                ))}
-                {visibleTracks.length === 0 && <p className="empty-state">No tracks match that search.</p>}
-              </div>
+          <section className="music-sections">
+            <div className="section-heading music-library-heading">
+              <div><p className="eyebrow">THE LIBRARY</p><h2>Made for your ears</h2></div>
+              <label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search the signal" /></label>
             </div>
-            <aside className="side-panel" id="albums">
-              <div className="section-heading"><div><p className="eyebrow">COLLECTED WORLDS</p><h2>Albums</h2></div><span className="count-label">{albums.length} total</span></div>
+            {trackSections.map((section) => {
+              const sectionTracks = section.tracks.filter((track) => visibleTracks.includes(track));
+              return (
+                <section className="music-category" key={section.id}>
+                  <div className="music-category-heading">
+                    <h3>{section.label}</h3>
+                    <span>{sectionTracks.length} tracks</span>
+                  </div>
+                  <div className="track-card-grid">
+                    {sectionTracks.map((track, index) => (
+                      <article className={`track-card ${activeTrack?.id === track.id ? "is-playing" : ""}`} key={track.id || track._id || index}>
+                        <div className="track-card-art-wrap">
+                          <img className="track-card-art" src={track.artwork} alt={track.title} loading="lazy" />
+                          <button className={`track-card-play ${track.color || "violet"}`} onClick={() => playTrack(track)} aria-label={`Play ${track.title}`}>
+                            {activeTrack?.id === track.id ? "Ⅱ" : "▶"}
+                          </button>
+                          <button className={`track-card-favorite ${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "is-favorite" : ""}`} onClick={() => toggleFavorite(track)} aria-label={`Toggle ${track.title} favourite`}>
+                            {favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "♥" : "♡"}
+                          </button>
+                        </div>
+                        <div className="track-card-info"><strong>{track.title}</strong><span>{track.artist || "Unknown artist"}</span><small>▷ 30s preview</small></div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+            {trackSections.length === 0 || visibleTracks.length === 0 ? <p className="empty-state">No tracks match that search.</p> : null}
+          </section>
+          <section className="albums-section" id="albums">
+            <div className="section-heading"><div><p className="eyebrow">COLLECTED WORLDS</p><h2>Albums</h2></div><span className="count-label">{albums.length} total</span></div>
+            <div className="albums-grid">
               {albums.map((album, index) => (
                 <div className="album-item" key={album._id || album.id || index}>
                   <div className={`album-art art-${index % 3}`}><span>{["◌", "✦", "≈"][index % 3]}</span></div>
                   <div><strong>{album.title}</strong><span>{album.artist || "Various artists"}</span></div><button aria-label={`Open ${album.title}`}>↗</button>
                 </div>
               ))}
-            </aside>
+            </div>
           </section>
           <section className="favorites-panel" id="favorites">
             <div className="section-heading"><div><p className="eyebrow">KEPT CLOSE</p><h2>Your favourites</h2></div><span className="count-label">{favoriteTracks.length} saved</span></div>

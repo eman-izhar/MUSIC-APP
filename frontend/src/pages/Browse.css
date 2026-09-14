@@ -21,6 +21,12 @@
   padding-bottom: 100px;
 }
 
+.browse-shell.embedded {
+  min-height: auto;
+  background: transparent;
+  padding-bottom: 24px;
+}
+
 /* ─── Top bar ─────────────────────────────────────────────────────────────── */
 .browse-topbar {
   display: flex;

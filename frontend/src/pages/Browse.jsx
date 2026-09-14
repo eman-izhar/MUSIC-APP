@@ -39,9 +39,9 @@ async function searchITunes(term, country = 'US', limit = 24) {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function Browse() {
-  const [user, setUser]                   = useState(null)
-  const [checking, setChecking]           = useState(true)
+export default function Browse({ embedded = false, initialUser = null }) {
+  const [user, setUser]                   = useState(initialUser)
+  const [checking, setChecking]           = useState(!initialUser)
   const [activeCategory, setActiveCategory] = useState('pakistani')
   const [tracks, setTracks]               = useState([])
   const [loading, setLoading]             = useState(true)
@@ -51,8 +51,9 @@ export default function Browse() {
 
   // ── Check who is logged in ───────────────────────────────────────────────
   useEffect(() => {
+    if (initialUser) return
     getMe().then((u) => { setUser(u); setChecking(false) })
-  }, [])
+  }, [initialUser])
 
   // ── Fetch tracks when category changes ───────────────────────────────────
   useEffect(() => {
@@ -127,19 +128,20 @@ export default function Browse() {
 
   // ── Main browse UI (listener only) ───────────────────────────────────────
   return (
-    <div className={`browse-shell ${activeTrack ? 'has-player' : ''}`}>
+    <div className={`browse-shell ${embedded ? 'embedded' : ''} ${activeTrack ? 'has-player' : ''}`}>
 
-      {/* ── Top bar ── */}
-      <header className="browse-topbar">
-        <Link className="browse-brand" to="/">
-          <span className="browse-brand-mark">◒</span> SONORA<span className="browse-dot">.</span>
-        </Link>
-        <div className="browse-topbar-right">
-          <span className="browse-username">{user.username}</span>
-          <Link className="browse-favorites-btn" to="/favorites">Favourites</Link>
-          <Link className="browse-ghost-btn" to="/">← Back</Link>
-        </div>
-      </header>
+      {!embedded && (
+        <header className="browse-topbar">
+          <Link className="browse-brand" to="/">
+            <span className="browse-brand-mark">◒</span> SONORA<span className="browse-dot">.</span>
+          </Link>
+          <div className="browse-topbar-right">
+            <span className="browse-username">{user.username}</span>
+            <Link className="browse-favorites-btn" to="/favorites">Favourites</Link>
+            <Link className="browse-ghost-btn" to="/">← Back</Link>
+          </div>
+        </header>
+      )}
 
       {/* ── Hero ── */}
       <div className="browse-hero">

@@ -44,7 +44,7 @@ export default function Browse() {
   const [checking, setChecking]           = useState(true)
   const [activeCategory, setActiveCategory] = useState('pakistani')
   const [tracks, setTracks]               = useState([])
-  const [loading, setLoading]             = useState(false)
+  const [loading, setLoading]             = useState(true)
   const [activeTrack, setActiveTrack]     = useState(null)
   const [isPlaying, setIsPlaying]         = useState(false)
   const audioRef                          = useRef(null)
@@ -59,8 +59,6 @@ export default function Browse() {
     if (!user || user.role !== 'user') return
     const cat = CATEGORIES.find((c) => c.id === activeCategory)
     if (!cat) return
-    setLoading(true)
-    setTracks([])
     searchITunes(cat.term, cat.country).then((results) => {
       setTracks(results)
       setLoading(false)
@@ -138,6 +136,7 @@ export default function Browse() {
         </Link>
         <div className="browse-topbar-right">
           <span className="browse-username">{user.username}</span>
+          <Link className="browse-favorites-btn" to="/favorites">Favourites</Link>
           <Link className="browse-ghost-btn" to="/">← Back</Link>
         </div>
       </header>
@@ -158,7 +157,7 @@ export default function Browse() {
             <button
               key={cat.id}
               className={`browse-tab ${activeCategory === cat.id ? 'active' : ''}`}
-              onClick={() => setActiveCategory(cat.id)}
+              onClick={() => { setLoading(true); setActiveCategory(cat.id) }}
             >
               {cat.label}
             </button>

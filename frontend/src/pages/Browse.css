@@ -2,12 +2,12 @@
 
 /* Shell */
 .browse-shell {
-  --browse-ink: #f6f1ff;
-  --browse-muted: #8e8998;
-  --browse-line: #2b2931;
-  --browse-violet: #a777ff;
-  --browse-acid: #d8ff4e;
-  --browse-orange: #ff775d;
+  --browse-ink: var(--ink, #f6f1ff);
+  --browse-muted: var(--muted, #8e8998);
+  --browse-line: var(--line, #2b2931);
+  --browse-violet: var(--violet, #a777ff);
+  --browse-acid: var(--acid, #d8ff4e);
+  --browse-orange: var(--orange, #ff775d);
   min-height: 100vh;
   background: radial-gradient(circle at 80% 8%, rgba(109, 48, 180, 0.28), transparent 25rem),
     radial-gradient(circle at 8% 42%, rgba(255, 82, 91, 0.07), transparent 25rem),
@@ -47,7 +47,7 @@
 .browse-topbar-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .browse-username {
@@ -408,4 +408,17 @@
   .browse-grid   { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
   .browse-player { padding: 10px 16px; gap: 10px; }
   .browse-player-info { display: none; }
+}
+
+.browse-favorites-btn {
+  color: var(--browse-acid);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 7px 16px;
+  border: 1px solid var(--browse-acid);
+  transition: all 0.2s;
+}
+
+.browse-favorites-btn:hover {
+  background: rgba(216, 255, 78, 0.12);
 }

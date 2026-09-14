@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./App.css";
 
 const API_URL =
@@ -90,6 +91,7 @@ function MouseStars() {
 }
 
 function App() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [tracks, setTracks] = useState([]);
   const [albums, setAlbums] = useState([]);
@@ -126,7 +128,7 @@ function App() {
     request("/auth/me")
       .then((data) => setUser(data.user))
       .catch(() => {});
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (user || authMode !== "login" || !GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
@@ -146,6 +148,7 @@ function App() {
             });
             setUser(data.user);
             setNotice(`Welcome, ${data.user.username}.`);
+            if (data.user.role === "user") navigate("/browse");
           } catch (error) {
             setNotice(error.message);
           } finally {
@@ -174,7 +177,7 @@ function App() {
     script.onload = renderGoogleButton;
     document.head.appendChild(script);
     return () => script.remove();
-  }, [authMode, user]);
+  }, [authMode, navigate, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -282,6 +285,7 @@ function App() {
       });
       setUser(data.user);
       setNotice(`Welcome, ${data.user.username}.`);
+      if (data.user.role === "user") navigate("/browse");
     } catch (error) {
       setNotice(error.message);
     } finally {

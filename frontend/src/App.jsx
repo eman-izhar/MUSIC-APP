@@ -185,6 +185,7 @@ function App() {
                 title: track.trackName,
                 artist: track.artistName,
                 genre: track.primaryGenreName || "New release",
+                artwork: track.artworkUrl100?.replace("100x100bb", "300x300bb"),
                 color: "violet",
                 uri: track.previewUrl,
               })),
@@ -652,17 +653,23 @@ function App() {
                 <div><p className="eyebrow">THE LIBRARY</p><h2>Made for your ears</h2></div>
                 <label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search the signal" /></label>
               </div>
-              <div className="track-list">
+              <div className="track-card-grid">
                 {visibleTracks.map((track, index) => (
-                  <article className={`track-row ${activeTrack?.id === track.id ? "is-playing" : ""}`} key={track.id || track._id || index}>
-                    <button className={`play-btn ${track.color || "violet"}`} onClick={() => playTrack(track)} aria-label={`Play ${track.title}`}>
-                      {activeTrack?.id === track.id ? "Ⅱ" : "▶"}
-                    </button>
-                    <div className="track-meta"><strong>{track.title}</strong><span>{track.artist || "Unknown artist"} <i>·</i> {track.genre || "New release"}</span></div>
-                    <div className="mini-wave">▂▅▃▇▆▃</div><span className="track-number">{String(index + 1).padStart(2, "0")}</span>
-                    <button className={`favorite-btn ${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "is-favorite" : ""}`} onClick={() => toggleFavorite(track)} aria-label={`Toggle ${track.title} favourite`}>
-                      {favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "♥" : "♡"}
-                    </button>
+                  <article className={`track-card ${activeTrack?.id === track.id ? "is-playing" : ""}`} key={track.id || track._id || index}>
+                    <div className="track-card-art-wrap">
+                      <img className="track-card-art" src={track.artwork} alt={track.title} loading="lazy" />
+                      <button className={`track-card-play ${track.color || "violet"}`} onClick={() => playTrack(track)} aria-label={`Play ${track.title}`}>
+                        {activeTrack?.id === track.id ? "Ⅱ" : "▶"}
+                      </button>
+                      <button className={`track-card-favorite ${favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "is-favorite" : ""}`} onClick={() => toggleFavorite(track)} aria-label={`Toggle ${track.title} favourite`}>
+                        {favoriteTracks.some((favorite) => favorite.trackId === getTrackId(track)) ? "♥" : "♡"}
+                      </button>
+                    </div>
+                    <div className="track-card-info">
+                      <strong>{track.title}</strong>
+                      <span>{track.artist || "Unknown artist"}</span>
+                      <small>▷ 30s preview</small>
+                    </div>
                   </article>
                 ))}
                 {visibleTracks.length === 0 && <p className="empty-state">No tracks match that search.</p>}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import './Browse.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://music-website-zzol.onrender.com/api'
+const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -26,14 +27,32 @@ async function getMe() {
   }
 }
 
-async function searchITunes(term, country = 'US', limit = 24) {
+async function searchJamendo(term, limit = 24) {
   try {
-    const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=${limit}&country=${country}`
-    const res = await fetch(url)
+    if (!JAMENDO_CLIENT_ID) throw new Error('Add VITE_JAMENDO_CLIENT_ID to the frontend environment.')
+    const params = new URLSearchParams({
+      client_id: JAMENDO_CLIENT_ID,
+      format: 'json',
+      search: term,
+      limit: String(limit),
+      audioformat: 'mp32',
+      imagesize: '300',
+      include: 'licenses musicinfo',
+    })
+    const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?${params}`)
+    if (!res.ok) throw new Error('Jamendo music could not be loaded.')
     const data = await res.json()
-    // Only return tracks that have a 30-sec preview URL
-    return data.results?.filter((t) => t.previewUrl) || []
-  } catch {
+    return (data.results || []).filter((track) => track.audio).map((track) => ({
+      trackId: track.id,
+      trackName: track.name,
+      artistName: track.artist_name,
+      primaryGenreName: track.musicinfo?.tags?.genres?.[0] || 'Independent',
+      artworkUrl100: track.image || track.album_image,
+      previewUrl: track.audio,
+      trackViewUrl: track.shareurl,
+    }))
+  } catch (error) {
+    console.error(error)
     return []
   }
 }
@@ -60,7 +79,7 @@ export default function Browse({ embedded = false, initialUser = null }) {
     if (!user || user.role !== 'user') return
     const cat = CATEGORIES.find((c) => c.id === activeCategory)
     if (!cat) return
-    searchITunes(cat.term, cat.country).then((results) => {
+    searchJamendo(cat.term).then((results) => {
       setTracks(results)
       setLoading(false)
     })

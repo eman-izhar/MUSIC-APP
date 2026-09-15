@@ -4,6 +4,7 @@ import "./App.css";
 const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID;
 
 const BROWSE_CATEGORIES = [
   { id: "pakistani", label: "Pakistani", term: "atif aslam", country: "PK" },
@@ -15,13 +16,35 @@ const BROWSE_CATEGORIES = [
   { id: "indie", label: "Indie", term: "indie alternative", country: "US" },
 ];
 
-async function searchITunes(term, entity, limit = 12, country = "PK") {
-  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(
-    term,
-  )}&media=music&entity=${entity}&limit=${limit}&country=${country}`;
-  const response = await fetch(url);
+async function searchJamendo(term, limit = 12) {
+  if (!JAMENDO_CLIENT_ID) {
+    throw new Error("Add VITE_JAMENDO_CLIENT_ID to the frontend environment.");
+  }
+  const params = new URLSearchParams({
+    client_id: JAMENDO_CLIENT_ID,
+    format: "json",
+    search: term,
+    limit: String(limit),
+    audioformat: "mp32",
+    imagesize: "300",
+    include: "licenses musicinfo",
+  });
+  const response = await fetch(`https://api.jamendo.com/v3.0/tracks/?${params}`);
+  if (!response.ok) throw new Error("Jamendo music could not be loaded.");
   const data = await response.json();
-  return data.results || [];
+  return (data.results || [])
+    .filter((track) => track.audio)
+    .map((track) => ({
+      id: track.id,
+      title: track.name,
+      artist: track.artist_name,
+      genre: track.musicinfo?.tags?.genres?.[0] || "Independent",
+      artwork: track.image || track.album_image,
+      color: "violet",
+      uri: track.audio,
+      sourceUrl: track.shareurl,
+      licenseUrl: track.license_ccurl,
+    }));
 }
 
 async function request(path, options = {}) {
@@ -185,8 +208,11 @@ function App() {
     if (!user) return;
     Promise.all([
       Promise.all(
-        BROWSE_CATEGORIES.map(({ term, country }) =>
-          searchITunes(term, "song", 24, country).catch(() => []),
+        BROWSE_CATEGORIES.map(({ term }) =>
+          searchJamendo(term, 24).catch((error) => {
+            setNotice(error.message);
+            return [];
+          }),
         ),
       ).then((categoryResults) => {
         const sections = categoryResults.map((categoryTracks, index) => {
@@ -208,16 +234,20 @@ function App() {
         setTrackSections(sections);
         setTracks(sections.flatMap((section) => section.tracks));
       }),
-      searchITunes("atif aslam", "album")
-        .then((results) =>
-          setAlbums(
-            results.map((album) => ({
-              id: album.collectionId,
-              title: album.collectionName,
-              artist: album.artistName,
-            })),
-          ),
-        )
+      searchJamendo("featured", 12)
+        .then((results) => {
+          const uniqueAlbums = new Map();
+          results.forEach((track) => {
+            if (!uniqueAlbums.has(track.artist)) {
+              uniqueAlbums.set(track.artist, {
+                id: track.id,
+                title: track.title,
+                artist: track.artist,
+              });
+            }
+          });
+          setAlbums(Array.from(uniqueAlbums.values()));
+        })
         .catch(() => setAlbums([])),
     ]);
   }, [user]);

@@ -223,6 +223,27 @@
   filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
 }
 
+.browse-favorite-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 50%;
+  background: rgba(12, 10, 20, 0.72);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.browse-favorite-btn.is-favorite {
+  color: #ff8fb3;
+  border-color: #ff8fb3;
+}
+
 .browse-now-playing-badge {
   position: absolute;
   bottom: 8px;

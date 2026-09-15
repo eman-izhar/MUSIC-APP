@@ -47,6 +47,38 @@ async function searchJamendo(term, limit = 12) {
     }));
 }
 
+async function searchITunes(term, limit = 24, country = "PK") {
+  const params = new URLSearchParams({
+    term,
+    media: "music",
+    entity: "song",
+    limit: String(limit),
+    country,
+  });
+  const response = await fetch(`https://itunes.apple.com/search?${params}`);
+  if (!response.ok) throw new Error("iTunes music could not be loaded.");
+  const data = await response.json();
+  return (data.results || [])
+    .filter((track) => track.previewUrl)
+    .map((track) => ({
+      id: `itunes-${track.trackId}`,
+      title: track.trackName,
+      artist: track.artistName,
+      genre: track.primaryGenreName || "Pakistani",
+      artwork: track.artworkUrl100?.replace("100x100bb", "300x300bb"),
+      color: "pink",
+      uri: track.previewUrl,
+      sourceUrl: track.trackViewUrl,
+    }));
+}
+
+async function searchCategory(category) {
+  const jamendoTracks = await searchJamendo(category.term, 24).catch(() => []);
+  if (category.id !== "pakistani") return jamendoTracks;
+  const itunesTracks = await searchITunes(category.term, 24, category.country).catch(() => []);
+  return [...itunesTracks, ...jamendoTracks];
+}
+
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     credentials: "include",
@@ -208,8 +240,8 @@ function App() {
     if (!user) return;
     Promise.all([
       Promise.all(
-        BROWSE_CATEGORIES.map(({ term }) =>
-          searchJamendo(term, 24).catch((error) => {
+        BROWSE_CATEGORIES.map((category) =>
+          searchCategory(category).catch((error) => {
             setNotice(error.message);
             return [];
           }),
@@ -218,16 +250,8 @@ function App() {
         const sections = categoryResults.map((categoryTracks, index) => {
           const uniqueTracks = new Map();
           categoryTracks.forEach((track) => {
-            if (!track.previewUrl || uniqueTracks.has(track.trackId)) return;
-            uniqueTracks.set(track.trackId, {
-              id: track.trackId,
-              title: track.trackName,
-              artist: track.artistName,
-              genre: track.primaryGenreName || "New release",
-              artwork: track.artworkUrl100?.replace("100x100bb", "300x300bb"),
-              color: "violet",
-              uri: track.previewUrl,
-            });
+            if (!track.uri || uniqueTracks.has(track.id)) return;
+            uniqueTracks.set(track.id, track);
           });
           return { ...BROWSE_CATEGORIES[index], tracks: Array.from(uniqueTracks.values()) };
         });

@@ -27,6 +27,16 @@ async function getMe() {
   }
 }
 
+  async function request(path, options = {}) {
+    const response = await fetch(`${API_URL}${path}`, {
+      credentials: 'include',
+      ...options,
+    })
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(data.message || 'Something went wrong')
+    return data
+  }
+
 async function searchJamendo(term, limit = 24) {
   try {
     if (!JAMENDO_CLIENT_ID) throw new Error('Add VITE_JAMENDO_CLIENT_ID to the frontend environment.')
@@ -57,12 +67,47 @@ async function searchJamendo(term, limit = 24) {
   }
 }
 
+async function searchITunes(term, country = 'PK', limit = 24) {
+  try {
+    const params = new URLSearchParams({
+      term,
+      media: 'music',
+      entity: 'song',
+      limit: String(limit),
+      country,
+    })
+    const res = await fetch(`https://itunes.apple.com/search?${params}`)
+    if (!res.ok) throw new Error('iTunes music could not be loaded.')
+    const data = await res.json()
+    return (data.results || []).filter((track) => track.previewUrl).map((track) => ({
+      trackId: `itunes-${track.trackId}`,
+      trackName: track.trackName,
+      artistName: track.artistName,
+      primaryGenreName: track.primaryGenreName || 'Pakistani',
+      artworkUrl100: track.artworkUrl100?.replace('100x100bb', '300x300bb'),
+      previewUrl: track.previewUrl,
+      trackViewUrl: track.trackViewUrl,
+    }))
+  } catch (error) {
+    console.error(error)
+    return []
+  }
+}
+
+async function searchCategory(category) {
+  const jamendoTracks = await searchJamendo(category.term)
+  if (category.id !== 'pakistani') return jamendoTracks
+  const itunesTracks = await searchITunes(category.term, category.country)
+  return [...itunesTracks, ...jamendoTracks]
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Browse({ embedded = false, initialUser = null }) {
   const [user, setUser]                   = useState(initialUser)
   const [checking, setChecking]           = useState(!initialUser)
   const [activeCategory, setActiveCategory] = useState('pakistani')
   const [tracks, setTracks]               = useState([])
+    const [favoriteTracks, setFavoriteTracks] = useState([])
   const [loading, setLoading]             = useState(true)
   const [activeTrack, setActiveTrack]     = useState(null)
   const [isPlaying, setIsPlaying]         = useState(false)
@@ -74,12 +119,19 @@ export default function Browse({ embedded = false, initialUser = null }) {
     getMe().then((u) => { setUser(u); setChecking(false) })
   }, [initialUser])
 
+  useEffect(() => {
+    if (!user) return
+    request('/music/favorites')
+      .then((data) => setFavoriteTracks(data.favorites || []))
+      .catch(() => setFavoriteTracks([]))
+  }, [user])
+
   // ── Fetch tracks when category changes ───────────────────────────────────
   useEffect(() => {
     if (!user || user.role !== 'user') return
     const cat = CATEGORIES.find((c) => c.id === activeCategory)
     if (!cat) return
-    searchJamendo(cat.term).then((results) => {
+    searchCategory(cat).then((results) => {
       setTracks(results)
       setLoading(false)
     })
@@ -92,6 +144,30 @@ export default function Browse({ embedded = false, initialUser = null }) {
       else           { audioRef.current?.play();  setIsPlaying(true)  }
     } else {
       setActiveTrack(track)
+    }
+  }
+
+  async function toggleFavorite(event, track) {
+    event.stopPropagation()
+    const isFavorite = favoriteTracks.some((favorite) => favorite.trackId === track.trackId)
+    try {
+      const data = isFavorite
+        ? await request(`/music/favorites/${encodeURIComponent(track.trackId)}`, { method: 'DELETE' })
+        : await request('/music/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              trackId: track.trackId,
+              title: track.trackName,
+              artist: track.artistName,
+              genre: track.primaryGenreName,
+              color: 'violet',
+              uri: track.previewUrl,
+            }),
+          })
+      setFavoriteTracks(data.favorites || [])
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -227,6 +303,13 @@ export default function Browse({ embedded = false, initialUser = null }) {
                     {isActive && (
                       <div className="browse-now-playing-badge">NOW PLAYING</div>
                     )}
+                    <button
+                      className={`browse-favorite-btn ${favoriteTracks.some((favorite) => favorite.trackId === track.trackId) ? 'is-favorite' : ''}`}
+                      onClick={(event) => toggleFavorite(event, track)}
+                      aria-label={`${favoriteTracks.some((favorite) => favorite.trackId === track.trackId) ? 'Remove' : 'Add'} ${track.trackName} ${favoriteTracks.some((favorite) => favorite.trackId === track.trackId) ? 'from' : 'to'} favourites`}
+                    >
+                      {favoriteTracks.some((favorite) => favorite.trackId === track.trackId) ? '♥' : '♡'}
+                    </button>
                   </div>
 
                   {/* Info */}

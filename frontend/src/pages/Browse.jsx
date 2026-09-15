@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import './Browse.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://music-website-zzol.onrender.com/api'
-const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID
+const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID || 'bba9d5f5'
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 const CATEGORIES = [

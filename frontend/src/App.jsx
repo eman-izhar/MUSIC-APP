@@ -4,7 +4,7 @@ import "./App.css";
 const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID;
+const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID || "bba9d5f5";
 
 const BROWSE_CATEGORIES = [
   { id: "pakistani", label: "Pakistani", term: "atif aslam", country: "PK" },

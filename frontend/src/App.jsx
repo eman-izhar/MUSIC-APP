@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import "./App.css";
 
 const API_URL =
@@ -458,12 +459,12 @@ function App() {
             <>
               {user?.role === "user" && (
                 <>
-                  <a className="browse-nav-btn" href="/#/browse">
+                  <Link className="browse-nav-btn" to="/browse" state={{ user }}>
                     🎵 Browse Music
-                  </a>
-                  <a className="favorites-nav-btn" href="/#/favorites">
+                  </Link>
+                  <Link className="favorites-nav-btn" to="/favorites">
                     ♡ Favourites <span className="favorite-nav-count">{favoriteTracks.length}</span>
-                  </a>
+                  </Link>
                 </>
               )}
               <button className="user-pill" onClick={openProfile} aria-label="Open profile settings">
@@ -500,10 +501,10 @@ function App() {
                 <a href="#albums" onClick={(event) => { scrollToSection(event, "albums"); setMobileNavOpen(false); }}>
                   Albums
                 </a>
-                <a href="/#/browse" onClick={() => setMobileNavOpen(false)}>🎵 Browse Music</a>
-                <a href="/#/favorites" onClick={() => setMobileNavOpen(false)}>
+                <Link to="/browse" state={{ user }} onClick={() => setMobileNavOpen(false)}>🎵 Browse Music</Link>
+                <Link to="/favorites" onClick={() => setMobileNavOpen(false)}>
                   ♡ Favourites <span className="favorite-nav-count">{favoriteTracks.length}</span>
-                </a>
+                </Link>
               </>
             )}
             <div className="mobile-nav-account">

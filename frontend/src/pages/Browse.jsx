@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import './Browse.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://music-website-zzol.onrender.com/api'
@@ -97,14 +97,22 @@ async function searchITunes(term, country = 'PK', limit = 24) {
 async function searchCategory(category) {
   const jamendoTracks = await searchJamendo(category.term)
   if (category.id !== 'pakistani') return jamendoTracks
-  const itunesTracks = await searchITunes(category.term, category.country)
-  return [...itunesTracks, ...jamendoTracks]
+  const itunesResults = await Promise.all([
+    searchITunes(category.term, category.country),
+    searchITunes('Pakistani music', category.country),
+    searchITunes('Coke Studio Pakistan', category.country),
+  ])
+  const uniqueTracks = new Map()
+  itunesResults.flat().forEach((track) => uniqueTracks.set(track.trackId, track))
+  return [...uniqueTracks.values(), ...jamendoTracks]
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Browse({ embedded = false, initialUser = null }) {
-  const [user, setUser]                   = useState(initialUser)
-  const [checking, setChecking]           = useState(!initialUser)
+  const location = useLocation()
+  const routedUser = location.state?.user || null
+  const [user, setUser]                   = useState(initialUser || routedUser)
+  const [checking, setChecking]           = useState(!initialUser && !routedUser)
   const [activeCategory, setActiveCategory] = useState('pakistani')
   const [tracks, setTracks]               = useState([])
     const [favoriteTracks, setFavoriteTracks] = useState([])
@@ -115,9 +123,9 @@ export default function Browse({ embedded = false, initialUser = null }) {
 
   // ── Check who is logged in ───────────────────────────────────────────────
   useEffect(() => {
-    if (initialUser) return
+    if (initialUser || routedUser) return
     getMe().then((u) => { setUser(u); setChecking(false) })
-  }, [initialUser])
+  }, [initialUser, routedUser])
 
   useEffect(() => {
     if (!user) return
@@ -128,7 +136,6 @@ export default function Browse({ embedded = false, initialUser = null }) {
 
   // ── Fetch tracks when category changes ───────────────────────────────────
   useEffect(() => {
-    if (!user || user.role !== 'user') return
     const cat = CATEGORIES.find((c) => c.id === activeCategory)
     if (!cat) return
     searchCategory(cat).then((results) => {

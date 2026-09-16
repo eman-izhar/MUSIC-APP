@@ -6,6 +6,7 @@ const API_URL =
   import.meta.env.VITE_API_URL || "https://music-website-zzol.onrender.com/api";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID || "bba9d5f5";
+const USER_SESSION_KEY = "sonora-user";
 
 const BROWSE_CATEGORIES = [
   { id: "pakistani", label: "Pakistani", term: "atif aslam", country: "PK" },
@@ -190,6 +191,10 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (user) sessionStorage.setItem(USER_SESSION_KEY, JSON.stringify(user));
+  }, [user]);
+
+  useEffect(() => {
     if (user || authMode !== "login" || !GOOGLE_CLIENT_ID || !googleButtonRef.current) return;
 
     const renderGoogleButton = () => {
@@ -359,6 +364,7 @@ function App() {
 
   async function logout() {
     await request("/auth/logout", { method: "POST" }).catch(() => {});
+    sessionStorage.removeItem(USER_SESSION_KEY);
     setUser(null);
     setFavoriteTracks([]);
     setNotice("You have been signed out.");

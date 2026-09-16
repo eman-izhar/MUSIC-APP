@@ -4,6 +4,7 @@ import './Browse.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://music-website-zzol.onrender.com/api'
 const JAMENDO_CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID || 'bba9d5f5'
+const USER_SESSION_KEY = 'sonora-user'
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -22,6 +23,14 @@ async function getMe() {
     const res = await fetch(`${API_URL}/auth/me`, { credentials: 'include' })
     const data = await res.json().catch(() => ({}))
     return data.user || null
+  } catch {
+    return null
+  }
+}
+
+function getStoredUser() {
+  try {
+    return JSON.parse(sessionStorage.getItem(USER_SESSION_KEY) || 'null')
   } catch {
     return null
   }
@@ -111,8 +120,9 @@ async function searchCategory(category) {
 export default function Browse({ embedded = false, initialUser = null }) {
   const location = useLocation()
   const routedUser = location.state?.user || null
-  const [user, setUser]                   = useState(initialUser || routedUser)
-  const [checking, setChecking]           = useState(!initialUser && !routedUser)
+  const storedUser = getStoredUser()
+  const [user, setUser]                   = useState(initialUser || routedUser || storedUser)
+  const [checking, setChecking]           = useState(!initialUser && !routedUser && !storedUser)
   const [activeCategory, setActiveCategory] = useState('pakistani')
   const [tracks, setTracks]               = useState([])
     const [favoriteTracks, setFavoriteTracks] = useState([])
@@ -123,9 +133,9 @@ export default function Browse({ embedded = false, initialUser = null }) {
 
   // ── Check who is logged in ───────────────────────────────────────────────
   useEffect(() => {
-    if (initialUser || routedUser) return
+    if (initialUser || routedUser || storedUser) return
     getMe().then((u) => { setUser(u); setChecking(false) })
-  }, [initialUser, routedUser])
+  }, [initialUser, routedUser, storedUser])
 
   useEffect(() => {
     if (!user) return
